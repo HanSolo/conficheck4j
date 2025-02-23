@@ -53,7 +53,7 @@ ext {
 
 dependencies {
     //implementation fileTree(dir: 'libs', include: '*.jar')
-    implementation 'eu.hansolo:jdktools:21.0.15'
+    implementation 'eu.hansolo:jdktools:21.0.17'
     implementation 'eu.hansolo:toolbox:21.0.17'
     //implementation 'eu.hansolo:toolboxfx:21.0.7'
     implementation 'com.google.code.gson:gson:2.11.0'

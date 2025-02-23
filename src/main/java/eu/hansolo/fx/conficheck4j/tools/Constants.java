@@ -12,6 +12,8 @@ public final class Constants {
     public static final int     APP_REFRESH_INTERVAL         = 3600;
     public static final String  JAVA_CONFERENCES_JSON_URL    = "https://javaconferences.org/conferences.json";
 
+    public static final boolean IS_DARK_MODE                 = Helper.isDarkMode();
+
     public static final String  HOME_FOLDER                  = new StringBuilder(System.getProperty("user.home")).append(File.separator).toString();
     public static final String  CONFERENCE_ITEMS_FILENAME    = "conference_items.json";
 
@@ -33,6 +35,11 @@ public final class Constants {
     public static final int     SECONDS_PER_DAY               = 86400;
     public static final int     SECONDS_PER_WEEK              = 604800;
 
+    public static final long    PING_INTERVAL_IN_SEC          = 2;
+    public static final String  TEST_CONNECTIVITY_URL         = "https://apple.com";
+
+    public static final double  STD_FONT_SIZE                 = 12;
+
     public static final Color   BLACK                         = Color.BLACK;
     public static final Color   WHITE                         = Color.WHITE;
     public static final Color   GRAY                          = Color.GRAY;
@@ -42,6 +49,8 @@ public final class Constants {
     public static final Color   YELLOW                        = Color.color(1.000, 0.659, 0.000, 1.00); // RGB 255, 168, 0
     public static final Color   GREEN                         = Color.color(0.000, 0.761, 0.004, 1.00); //   0, 194, 1
     public static final Color   PURPLE                        = Color.color(0.620, 0.120, 0.640, 1.00);
+
+    public static final String[] MONTHS                       = { "JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE", "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER" };
 
     public enum ConferenceType {
         IN_PERSON("In-Person", "in_person"),
@@ -170,5 +179,35 @@ public final class Constants {
             this.code = code;
             this.name = name;
         }
+
+        public static final Continent fromText(final String text) {
+            switch(text) {
+                case "All Continents" -> { return ALL; }
+                case "Africa"         -> { return AFRICA; }
+                case "Antarctica"     -> { return ANTARCTICA; }
+                case "Asia"           -> { return ASIA; }
+                case "Europe"         -> { return EUROPE; }
+                case "North America"  -> { return NORTH_AMERICA; }
+                case "Oceania"        -> { return OCEANIA; }
+                case "South America"  -> { return SOUTH_AMERICA; }
+                default               -> { return ALL; }
+            }
+        }
+    }
+
+    public enum Filter {
+        ALL("All"),
+        SPEAKING("Speaking"),
+        ATTENDING("Attending"),
+        CFP_OPEN("CFP Open");
+
+        private String name;
+
+        Filter(final String name) {
+            this.name = name;
+        }
+
+
+        public String getName() { return this.name; }
     }
 }

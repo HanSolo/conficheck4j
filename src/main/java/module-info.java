@@ -13,6 +13,8 @@ module eu.hansolo.fx.conficheck4j {
     requires transitive eu.hansolo.toolbox;
     //requires transitive eu.hansolo.toolboxfx;
     requires transitive com.google.gson;
+    requires kernel;
+    requires io;
 
     exports eu.hansolo.fx.conficheck4j;
 }

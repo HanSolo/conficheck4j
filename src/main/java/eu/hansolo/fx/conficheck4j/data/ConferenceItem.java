@@ -98,18 +98,24 @@ public class ConferenceItem {
     public Optional<Double> getLon() { return lon; }
     public void setLon(final Optional<Double> lon) { this.lon = lon; }
 
+    public List<ProposalItem> getProposals() { return proposals; }
     public final void addProposal(final ProposalItem proposal) {
         if (this.proposals.contains(proposal)) { return; }
         this.proposals.add(proposal);
         this.proposalStates.put(proposal.getId(), ProposalStatus.NOT_SUBMITTED.apiString);
     }
-
     public final void removeProposal(final ProposalItem proposal) {
         Optional<ProposalItem> optionalProposal = this.proposals.stream().filter(p -> p.getId().equals(proposal.getId())).findFirst();
         if (optionalProposal.isPresent()) {
             this.proposals.remove(optionalProposal.get());
             this.proposalStates.remove(optionalProposal.get().getId());
         }
+    }
+
+    public final Map<String, String> getProposalStates() { return proposalStates; }
+
+    public String getId() {
+        return String.join("_", this.name, this.url);
     }
 
     public final String toJsonString() {
@@ -119,16 +125,16 @@ public class ConferenceItem {
                                   .append(Constants.QUOTES).append(FIELD_CITY).append(Constants.QUOTES_COLON_QUOTES).append(this.city).append(Constants.QUOTES).append(Constants.COMMA)
                                   .append(Constants.QUOTES).append(FIELD_COUNTRY).append(Constants.QUOTES_COLON_QUOTES).append(this.country).append(Constants.QUOTES).append(Constants.COMMA)
                                   .append(Constants.QUOTES).append(FIELD_URL).append(Constants.QUOTES_COLON_QUOTES).append(this.url).append(Constants.QUOTES).append(Constants.COMMA)
-                                  .append(Constants.QUOTES).append(FIELD_DATE).append(Constants.QUOTES_COLON_QUOTES).append(this.date).append(Constants.QUOTES).append(Constants.COMMA)
+                                  .append(Constants.QUOTES).append(FIELD_DATE).append(Constants.QUOTES_COLON).append(this.date.getEpochSecond()).append(Constants.COMMA)
                                   .append(Constants.QUOTES).append(FIELD_DAYS).append(Constants.QUOTES_COLON).append(this.days).append(Constants.COMMA)
                                   .append(Constants.QUOTES).append(FIELD_TYPE).append(Constants.QUOTES_COLON_QUOTES).append(this.type).append(Constants.QUOTES).append(Constants.COMMA)
                                   .append(Constants.QUOTES).append(FIELD_CFP_URL).append(Constants.QUOTES_COLON_QUOTES).append(this.cfpUrl.isPresent() ? this.cfpUrl.get() : "").append(Constants.QUOTES).append(Constants.COMMA)
                                   .append(Constants.QUOTES).append(FIELD_CFP_DATE).append(Constants.QUOTES_COLON_QUOTES).append(this.cfpDate.isPresent() ? this.cfpDate.get() : "").append(Constants.QUOTES).append(Constants.COMMA)
                                   .append(Constants.QUOTES).append(FIELD_LAT).append(Constants.QUOTES_COLON).append(this.lat.isPresent() ? this.lat.get() : 0.0).append(Constants.COMMA)
                                   .append(Constants.QUOTES).append(FIELD_LON).append(Constants.QUOTES_COLON).append(this.lon.isPresent() ? this.lon.get() : 0.0).append(Constants.COMMA)
-                                  .append(Constants.QUOTES).append(FIELD_PROPOSALS).append(Constants.QUOTES_COLON).append(this.proposals.stream().map(p -> p.toString()).collect(Collectors.joining(Constants.COMMA, Constants.SQUARE_BRACKET_OPEN, Constants.SQUARE_BRACKET_CLOSE))).append(Constants.COMMA)
+                                  .append(Constants.QUOTES).append(FIELD_PROPOSALS).append(Constants.QUOTES_COLON).append(this.proposals.stream().map(p -> p.toJsonString()).collect(Collectors.joining(Constants.COMMA, Constants.SQUARE_BRACKET_OPEN, Constants.SQUARE_BRACKET_CLOSE))).append(Constants.COMMA)
                                   .append(Constants.QUOTES).append(FIELD_PROPOSAL_STATES).append(Constants.QUOTES_COLON)
-                                  .append(this.proposalStates.entrySet().stream().map(entry -> new StringBuilder(Constants.COMMA).append(entry.getKey()).append(Constants.QUOTES_COLON_QUOTES).append(entry.getValue()).append(Constants.QUOTES).toString()).collect(Collectors.joining(Constants.COMMA, Constants.SQUARE_BRACKET_OPEN, Constants.SQUARE_BRACKET_CLOSE)))
+                                  .append(this.proposalStates.entrySet().stream().map(entry -> new StringBuilder(Constants.CURLY_BRACKET_OPEN).append(Constants.QUOTES).append(ProposalItem.FIELD_TITLE).append(Constants.QUOTES_COLON_QUOTES).append(entry.getKey()).append(Constants.QUOTES).append(Constants.COMMA).append(Constants.QUOTES).append(ProposalItem.FIELD_STATE).append(Constants.QUOTES_COLON_QUOTES).append(entry.getValue()).append(Constants.QUOTES).append(Constants.CURLY_BRACKET_CLOSE).toString()).collect(Collectors.joining(Constants.COMMA, Constants.SQUARE_BRACKET_OPEN, Constants.SQUARE_BRACKET_CLOSE)))
                                   .append(Constants.CURLY_BRACKET_CLOSE)
                                   .toString();
     }

@@ -1,12 +1,18 @@
 package eu.hansolo.fx.conficheck4j.data;
 
+import eu.hansolo.toolbox.Constants;
+
 import java.util.Objects;
 
 
 public class ProposalItem {
-    private String title    = "";
-    private String abstrakt = "";
-    private String pitch    = "";
+    public static final String FIELD_TITLE    = "title";
+    public static final String FIELD_ABSTRACT = "abstract";
+    public static final String FIELD_PITCH    = "pitch";
+    public static final String FIELD_STATE    = "state";
+    private             String title          = "";
+    private             String abstrakt       = "";
+    private             String pitch          = "";
 
 
     public ProposalItem(final String title, final String abstrakt, final String pitch) {
@@ -26,6 +32,15 @@ public class ProposalItem {
 
     public String getPitch() { return this.pitch; }
     public void setPitch(final String pitch) { this.pitch = pitch; }
+
+    public final String toJsonString() {
+        return new StringBuilder().append(Constants.CURLY_BRACKET_OPEN)
+                                  .append(Constants.QUOTES).append(FIELD_TITLE).append(Constants.QUOTES_COLON_QUOTES).append(this.title).append(Constants.QUOTES).append(Constants.COMMA)
+                                  .append(Constants.QUOTES).append(FIELD_TITLE).append(Constants.QUOTES_COLON_QUOTES).append(this.title).append(Constants.QUOTES).append(Constants.COMMA)
+                                  .append(Constants.QUOTES).append(FIELD_TITLE).append(Constants.QUOTES_COLON_QUOTES).append(this.title).append(Constants.QUOTES)
+                                  .append(Constants.CURLY_BRACKET_CLOSE)
+                                  .toString();
+    }
 
     @Override public boolean equals(final Object obj) {
         if (obj == null || getClass() != obj.getClass()) { return false; }
