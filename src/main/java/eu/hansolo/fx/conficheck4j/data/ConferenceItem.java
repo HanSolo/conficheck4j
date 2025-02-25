@@ -174,12 +174,8 @@ public class ConferenceItem implements Comparable<ConferenceItem> {
         if (null != proposalArray) {
             for (final JsonElement proposalElement : proposalArray) {
                 final JsonObject proposalObject = proposalElement.getAsJsonObject();
-                final String     title          = proposalObject.has(ProposalItem.FIELD_TITLE) ? proposalObject.get(ProposalItem.FIELD_TITLE).getAsString() : "";
-                final String     abstrakt       = proposalObject.has(ProposalItem.FIELD_ABSTRACT) ? proposalObject.get(ProposalItem.FIELD_ABSTRACT).getAsString() : "";
-                final String     pitch          = proposalObject.has(ProposalItem.FIELD_PITCH) ? proposalObject.get(ProposalItem.FIELD_PITCH).getAsString() : "";
-                if (!title.isBlank() && !abstrakt.isBlank()) {
-                    proposals.add(new ProposalItem(title, abstrakt, pitch));
-                }
+                final ProposalItem proposalItem = ProposalItem.fromJsonObject(proposalObject);
+                if (null != proposalItem) { proposals.add(proposalItem); }
             }
         }
         final JsonArray proposalStatesArray = jsonObject.has(ConferenceItem.FIELD_PROPOSAL_STATES) ? jsonObject.getAsJsonArray(ConferenceItem.FIELD_PROPOSALS) : null;

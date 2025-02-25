@@ -16,6 +16,7 @@ public final class Constants {
 
     public static final String  HOME_FOLDER                  = new StringBuilder(System.getProperty("user.home")).append(File.separator).toString();
     public static final String  CONFERENCE_ITEMS_FILENAME    = "conference_items.json";
+    public static final String  PROPOSAL_ITEMS_FILENAME      = "proposal_items.json";
 
     public static final Pattern JAVA_CONFERENCE_DATE_REGEX   = Pattern.compile("(([0-9]{1,2})\\s+([A-Za-z]+)\\s+([0-9]{4}))|(([0-9]{1,2})[-–]([0-9]{1,2})\\s+([a-zA-Z]+)\\s+([0-9]{4}))|(([0-9]{1,2})\\s+([a-zA-Z]+)\\s-\\s+([0-9]{1,2})\\s([a-zA-Z]+)\\s+([0-9]{4}))");
     public static final Matcher JAVA_CONFERENCE_DATE_MATCHER = JAVA_CONFERENCE_DATE_REGEX.matcher("");

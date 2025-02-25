@@ -116,6 +116,11 @@ public class Helper {
         Collectors.joining(eu.hansolo.toolbox.Constants.COMMA, eu.hansolo.toolbox.Constants.SQUARE_BRACKET_OPEN, eu.hansolo.toolbox.Constants.SQUARE_BRACKET_CLOSE))).toString(), eu.hansolo.toolbox.Constants.HOME_FOLDER + eu.hansolo.fx.conficheck4j.tools.Constants.CONFERENCE_ITEMS_FILENAME);
     }
 
+    public static final void saveProposalItems(final List<ProposalItem> proposals) {
+        Helper.saveTextFile(new StringBuilder().append(proposals.stream().map(proposalItem -> proposalItem.toJsonString()).collect(
+        Collectors.joining(eu.hansolo.toolbox.Constants.COMMA, eu.hansolo.toolbox.Constants.SQUARE_BRACKET_OPEN, eu.hansolo.toolbox.Constants.SQUARE_BRACKET_CLOSE))).toString(), eu.hansolo.toolbox.Constants.HOME_FOLDER + eu.hansolo.fx.conficheck4j.tools.Constants.PROPOSAL_ITEMS_FILENAME);
+    }
+
     public static final Optional<Instant>[] getDatesFromJavaConferenceDate(final String date) {
         if (null == date || date.isEmpty()) { return new Optional[] { Optional.empty(), Optional.empty() }; }
         Constants.JAVA_CONFERENCE_DATE_MATCHER.reset(date);

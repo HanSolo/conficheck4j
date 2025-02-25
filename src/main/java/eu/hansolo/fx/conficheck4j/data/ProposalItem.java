@@ -1,8 +1,18 @@
 package eu.hansolo.fx.conficheck4j.data;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import eu.hansolo.toolbox.Constants;
 
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 
 public class ProposalItem {
@@ -40,6 +50,31 @@ public class ProposalItem {
                                   .append(Constants.QUOTES).append(FIELD_TITLE).append(Constants.QUOTES_COLON_QUOTES).append(this.title).append(Constants.QUOTES)
                                   .append(Constants.CURLY_BRACKET_CLOSE)
                                   .toString();
+    }
+
+    public static final ProposalItem fromJsonString(final String jsonText) {
+        if (null == jsonText || jsonText.isEmpty()) { return null; }
+        final Gson        gson        = new Gson();
+        final JsonElement jsonElement = gson.fromJson(jsonText, JsonElement.class);
+        if (null == jsonElement) { return null; }
+        if (jsonElement.isJsonObject()) {
+            final JsonObject jsonObject = jsonElement.getAsJsonObject();
+            if (null == jsonObject) { return null; }
+            return fromJsonObject(jsonObject);
+        } else {
+            return null;
+        }
+    }
+    public static final ProposalItem fromJsonObject(final JsonObject jsonObject) {
+        final String title    = jsonObject.has(FIELD_TITLE)    ? jsonObject.get(FIELD_TITLE).getAsString()    : "";
+        final String abstrakt = jsonObject.has(FIELD_ABSTRACT) ? jsonObject.get(FIELD_ABSTRACT).getAsString() : "";
+        final String pitch    = jsonObject.has(FIELD_PITCH)    ? jsonObject.get(FIELD_PITCH).getAsString()    : "";
+
+        if (!title.isBlank() && !abstrakt.isBlank()) {
+            return new ProposalItem(title, abstrakt, pitch);
+        } else {
+            return null;
+        }
     }
 
     @Override public boolean equals(final Object obj) {

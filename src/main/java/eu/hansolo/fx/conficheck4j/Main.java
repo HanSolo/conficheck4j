@@ -47,6 +47,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 
 public class Main extends Application {
@@ -152,7 +153,7 @@ public class Main extends Application {
     @Override public void start(final Stage stage) {
         initOnFXApplicationThread();
 
-        Scene scene = new Scene(pane, 600, 720);
+        Scene scene = new Scene(pane, 500, 570);
         scene.getStylesheets().add(Main.class.getResource("conficheck4j.css").toExternalForm());
         stage.setScene(scene);
         stage.setTitle("ConfiCheck " + Main.VERSION);
@@ -218,12 +219,12 @@ public class Main extends Application {
                 case CFP_OPEN  -> {
                     for (Integer month : this.model.conferencesPerContinent.keySet()) {
                         if (this.model.conferencesPerContinent.get(month).isEmpty()) { continue; }
-                        this.model.filteredConferences.put(month, (TreeSet<ConferenceItem>) this.model.conferencesPerContinent.get(month)
-                                                                                                                              .stream()
-                                                                                                                              .filter(conference -> conference.getCfpDate().isPresent())
-                                                                                                                              .filter(conference -> Helper.getDatesFromJavaConferenceDate(conference.getCfpDate().get()).length > 0 && Helper.getDatesFromJavaConferenceDate(conference.getCfpDate().get())[0].isPresent())
-                                                                                                                              .filter(conference -> Helper.isCfpOpen(ZonedDateTime.ofInstant(Helper.getDatesFromJavaConferenceDate(conference.getCfpDate().get())[0].get(), ZoneId.systemDefault()).toLocalDate()))
-                                                                                                                              .toList());
+                        this.model.filteredConferences.put(month, new TreeSet<>(this.model.conferencesPerContinent.get(month)
+                                                                                                                  .stream()
+                                                                                                                  .filter(conference -> conference.getCfpDate().isPresent())
+                                                                                                                  .filter(conference -> Helper.getDatesFromJavaConferenceDate(conference.getCfpDate().get()).length > 0 && Helper.getDatesFromJavaConferenceDate(conference.getCfpDate().get())[0].isPresent())
+                                                                                                                  .filter(conference -> Helper.isCfpOpen(ZonedDateTime.ofInstant(Helper.getDatesFromJavaConferenceDate(conference.getCfpDate().get())[0].get(), ZoneId.systemDefault()).toLocalDate()))
+                                                                                                                  .collect(Collectors.toSet())));
                     }
                 }
             }
