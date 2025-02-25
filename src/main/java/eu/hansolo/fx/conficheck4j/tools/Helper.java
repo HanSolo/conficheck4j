@@ -32,9 +32,14 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.concurrent.CompletionException;
 import java.util.stream.Collectors;
@@ -79,50 +84,12 @@ public class Helper {
     public static final List<ConferenceItem> parseConferenceItemsJson(final String jsonText) {
         final List<ConferenceItem> conferences          = new ArrayList<>();
         if (null == jsonText || jsonText.isEmpty()) { return conferences; }
-        final Gson                 gson                 = new Gson();
-        final JsonArray            conferenceItemArray = gson.fromJson(jsonText, JsonElement.class).getAsJsonArray();
+        final Gson      gson                = new Gson();
+        final JsonArray conferenceItemArray = gson.fromJson(jsonText, JsonElement.class).getAsJsonArray();
         conferenceItemArray.forEach(jsonElement -> {
-            final JsonObject jsonObject    = jsonElement.getAsJsonObject();
-            final String     name          = jsonObject.has(ConferenceItem.FIELD_NAME)      ? jsonObject.get(ConferenceItem.FIELD_NAME).getAsString()                      : "";
-            final String     location      = jsonObject.has(ConferenceItem.FIELD_LOCATION)  ? jsonObject.get(ConferenceItem.FIELD_LOCATION).getAsString()                  : "";
-            final String     city          = jsonObject.has(ConferenceItem.FIELD_CITY)      ? jsonObject.get(ConferenceItem.FIELD_CITY).getAsString()                      : "";
-            final String     country       = jsonObject.has(ConferenceItem.FIELD_COUNTRY)   ? jsonObject.get(ConferenceItem.FIELD_COUNTRY).getAsString()                   : "";
-            final String     url           = jsonObject.has(ConferenceItem.FIELD_URL)       ? jsonObject.get(ConferenceItem.FIELD_URL).getAsString()                       : "";
-            final Instant    date          = jsonObject.has(ConferenceItem.FIELD_DATE)      ? Instant.ofEpochSecond(jsonObject.get(ConferenceItem.FIELD_DATE).getAsLong()) : Instant.MIN;
-            final double     days          = jsonObject.has(ConferenceItem.FIELD_DAYS)      ? jsonObject.get(ConferenceItem.FIELD_DAYS).getAsDouble()                      : -1;
-            final String     type          = jsonObject.has(ConferenceItem.FIELD_TYPE)      ? jsonObject.get(ConferenceItem.FIELD_TYPE).getAsString()                      : "";
-            final Optional<String> cfpUrl  = jsonObject.has(ConferenceItem.FIELD_CFP_URL)   ? Optional.of(jsonObject.get(ConferenceItem.FIELD_CFP_URL).getAsString())                   : Optional.empty();
-            final Optional<String> cfpDate = jsonObject.has(ConferenceItem.FIELD_CFP_DATE)  ? Optional.of(jsonObject.get(ConferenceItem.FIELD_CFP_DATE).getAsString()) : Optional.empty();
-            final Optional<Double> lat           = jsonObject.has(ConferenceItem.FIELD_LAT)       ? Optional.of(jsonObject.get(ConferenceItem.FIELD_LAT).getAsDouble())                      : Optional.empty();
-            final Optional<Double> lon           = jsonObject.has(ConferenceItem.FIELD_LON)       ? Optional.of(jsonObject.get(ConferenceItem.FIELD_LON).getAsDouble())                       : Optional.empty();
-            final JsonArray  proposalArray = jsonObject.has(ConferenceItem.FIELD_PROPOSALS) ? jsonObject.getAsJsonArray(ConferenceItem.FIELD_PROPOSALS)                    : null;
-            final List<ProposalItem> proposals = new ArrayList<>();
-            if (null != proposalArray) {
-                for (final JsonElement proposalElement : proposalArray) {
-                    final JsonObject proposalObject = proposalElement.getAsJsonObject();
-                    final String     title          = proposalObject.has(ProposalItem.FIELD_TITLE) ? proposalObject.get(ProposalItem.FIELD_TITLE).getAsString() : "";
-                    final String     abstrakt       = proposalObject.has(ProposalItem.FIELD_ABSTRACT) ? proposalObject.get(ProposalItem.FIELD_ABSTRACT).getAsString() : "";
-                    final String     pitch          = proposalObject.has(ProposalItem.FIELD_PITCH) ? proposalObject.get(ProposalItem.FIELD_PITCH).getAsString() : "";
-                    if (!title.isBlank() && !abstrakt.isBlank()) {
-                        proposals.add(new ProposalItem(title, abstrakt, pitch));
-                    }
-                }
-            }
-            final JsonArray proposalStatesArray = jsonObject.has(ConferenceItem.FIELD_PROPOSAL_STATES) ? jsonObject.getAsJsonArray(ConferenceItem.FIELD_PROPOSALS) : null;
-            final Map<String, String> proposalStates = new HashMap<>();
-            if (null != proposalStatesArray) {
-                for (final JsonElement proposalStateElement : proposalStatesArray) {
-                    final JsonObject proposalStateObject = proposalStateElement.getAsJsonObject();
-                    final String title = proposalStateObject.has(ProposalItem.FIELD_TITLE) ? proposalStateObject.get(ProposalItem.FIELD_TITLE).getAsString() : "";
-                    final String state = proposalStateObject.has(ProposalItem.FIELD_STATE) ? proposalStateObject.get(ProposalItem.FIELD_STATE).getAsString() : "";
-                    if (!title.isBlank() && !state.isBlank()) {
-                        proposalStates.put(title, state);
-                    }
-                }
-            }
-            if (!name.isBlank() && !url.isBlank()) {
-                conferences.add(new ConferenceItem(name, location, city, country, url, date, days, type, cfpUrl, cfpDate, lat, lon, proposals, proposalStates));
-            }
+            final JsonObject     jsonObject = jsonElement.getAsJsonObject();
+            final ConferenceItem conference = ConferenceItem.fromJsonObject(jsonObject);
+            if (null != conference) { conferences.add(conference); }
         });
         return conferences;
     }

@@ -1,5 +1,9 @@
 package eu.hansolo.fx.conficheck4j.data;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import eu.hansolo.fx.conficheck4j.tools.Constants.ProposalStatus;
 import eu.hansolo.toolbox.Constants;
 
@@ -13,18 +17,18 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 
-public class ConferenceItem {
-    public static final String              FIELD_NAME            = "name";
-    public static final String              FIELD_LOCATION        = "location";
-    public static final String              FIELD_CITY            = "city";
-    public static final String              FIELD_COUNTRY         = "country";
-    public static final String              FIELD_URL             = "url";
-    public static final String              FIELD_DATE            = "date";
-    public static final String              FIELD_DAYS            = "days";
-    public static final String              FIELD_TYPE            = "type";
-    public static final String              FIELD_CFP_URL         = "cfp_url";
-    public static final String              FIELD_CFP_DATE        = "cfp_date";
-    public static final String              FIELD_LAT             = "lat";
+public class ConferenceItem implements Comparable<ConferenceItem> {
+    public static final String FIELD_NAME     = "name";
+    public static final String FIELD_LOCATION = "location";
+    public static final String FIELD_CITY     = "city";
+    public static final String FIELD_COUNTRY  = "country";
+    public static final String FIELD_URL      = "url";
+    public static final String FIELD_DATE     = "date";
+    public static final String FIELD_DAYS     = "days";
+    public static final String FIELD_TYPE     = "type";
+    public static final String FIELD_CFP_URL  = "cfp_url";
+    public static final String FIELD_CFP_DATE = "cfp_date";
+    public static final String FIELD_LAT      = "lat";
     public static final String              FIELD_LON             = "lon";
     public static final String              FIELD_PROPOSALS       = "proposals";
     public static final String              FIELD_PROPOSAL_STATES = "proposal_states";
@@ -139,13 +143,69 @@ public class ConferenceItem {
                                   .toString();
     }
 
-    public static final ConferenceItem fromJsonString(String jsonText) {
-        return null;
+    public static final ConferenceItem fromJsonString(final String jsonText) {
+        if (null == jsonText || jsonText.isEmpty()) { return null; }
+        final Gson        gson        = new Gson();
+        final JsonElement jsonElement = gson.fromJson(jsonText, JsonElement.class);
+        if (null == jsonElement) { return null; }
+        if (jsonElement.isJsonObject()) {
+            final JsonObject jsonObject = jsonElement.getAsJsonObject();
+            if (null == jsonObject) { return null; }
+            return fromJsonObject(jsonObject);
+        } else {
+            return null;
+        }
+    }
+    public static final ConferenceItem fromJsonObject(final JsonObject jsonObject) {
+        final String             name          = jsonObject.has(ConferenceItem.FIELD_NAME)      ? jsonObject.get(ConferenceItem.FIELD_NAME).getAsString()                      : "";
+        final String             location      = jsonObject.has(ConferenceItem.FIELD_LOCATION)  ? jsonObject.get(ConferenceItem.FIELD_LOCATION).getAsString()                  : "";
+        final String             city          = jsonObject.has(ConferenceItem.FIELD_CITY)      ? jsonObject.get(ConferenceItem.FIELD_CITY).getAsString()                      : "";
+        final String             country       = jsonObject.has(ConferenceItem.FIELD_COUNTRY)   ? jsonObject.get(ConferenceItem.FIELD_COUNTRY).getAsString()                   : "";
+        final String             url           = jsonObject.has(ConferenceItem.FIELD_URL)       ? jsonObject.get(ConferenceItem.FIELD_URL).getAsString()                       : "";
+        final Instant            date          = jsonObject.has(ConferenceItem.FIELD_DATE)      ? Instant.ofEpochSecond(jsonObject.get(ConferenceItem.FIELD_DATE).getAsLong()) : Instant.MIN;
+        final double             days          = jsonObject.has(ConferenceItem.FIELD_DAYS)      ? jsonObject.get(ConferenceItem.FIELD_DAYS).getAsDouble()                      : -1;
+        final String             type          = jsonObject.has(ConferenceItem.FIELD_TYPE)      ? jsonObject.get(ConferenceItem.FIELD_TYPE).getAsString()                      : "";
+        final Optional<String>   cfpUrl        = jsonObject.has(ConferenceItem.FIELD_CFP_URL)   ? Optional.of(jsonObject.get(ConferenceItem.FIELD_CFP_URL).getAsString())                   : Optional.empty();
+        final Optional<String>   cfpDate       = jsonObject.has(ConferenceItem.FIELD_CFP_DATE)  ? Optional.of(jsonObject.get(ConferenceItem.FIELD_CFP_DATE).getAsString()) : Optional.empty();
+        final Optional<Double>   lat           = jsonObject.has(ConferenceItem.FIELD_LAT)       ? Optional.of(jsonObject.get(ConferenceItem.FIELD_LAT).getAsDouble())                      : Optional.empty();
+        final Optional<Double>   lon           = jsonObject.has(ConferenceItem.FIELD_LON)       ? Optional.of(jsonObject.get(ConferenceItem.FIELD_LON).getAsDouble())                       : Optional.empty();
+        final JsonArray          proposalArray = jsonObject.has(ConferenceItem.FIELD_PROPOSALS) ? jsonObject.getAsJsonArray(ConferenceItem.FIELD_PROPOSALS)                    : null;
+        final List<ProposalItem> proposals = new ArrayList<>();
+        if (null != proposalArray) {
+            for (final JsonElement proposalElement : proposalArray) {
+                final JsonObject proposalObject = proposalElement.getAsJsonObject();
+                final String     title          = proposalObject.has(ProposalItem.FIELD_TITLE) ? proposalObject.get(ProposalItem.FIELD_TITLE).getAsString() : "";
+                final String     abstrakt       = proposalObject.has(ProposalItem.FIELD_ABSTRACT) ? proposalObject.get(ProposalItem.FIELD_ABSTRACT).getAsString() : "";
+                final String     pitch          = proposalObject.has(ProposalItem.FIELD_PITCH) ? proposalObject.get(ProposalItem.FIELD_PITCH).getAsString() : "";
+                if (!title.isBlank() && !abstrakt.isBlank()) {
+                    proposals.add(new ProposalItem(title, abstrakt, pitch));
+                }
+            }
+        }
+        final JsonArray proposalStatesArray = jsonObject.has(ConferenceItem.FIELD_PROPOSAL_STATES) ? jsonObject.getAsJsonArray(ConferenceItem.FIELD_PROPOSALS) : null;
+        final Map<String, String> proposalStates = new HashMap<>();
+        if (null != proposalStatesArray) {
+            for (final JsonElement proposalStateElement : proposalStatesArray) {
+                final JsonObject proposalStateObject = proposalStateElement.getAsJsonObject();
+                final String     title               = proposalStateObject.has(ProposalItem.FIELD_TITLE) ? proposalStateObject.get(ProposalItem.FIELD_TITLE).getAsString() : "";
+                final String     state               = proposalStateObject.has(ProposalItem.FIELD_STATE) ? proposalStateObject.get(ProposalItem.FIELD_STATE).getAsString() : "";
+                if (!title.isBlank() && !state.isBlank()) {
+                    proposalStates.put(title, state);
+                }
+            }
+        }
+        if (!name.isBlank() && !url.isBlank()) {
+            return new ConferenceItem(name, location, city, country, url, date, days, type, cfpUrl, cfpDate, lat, lon, proposals, proposalStates);
+        } else {
+            return null;
+        }
     }
 
     @Override public String toString() {
         return new StringBuilder(this.name).append(" -> ").append(this.proposals.size()).toString();
     }
+
+    @Override public int compareTo(final ConferenceItem o) { return this.getDate().compareTo(o.getDate()); }
 
     @Override public boolean equals(final Object o) {
         if (o == null || getClass() != o.getClass()) { return false; }

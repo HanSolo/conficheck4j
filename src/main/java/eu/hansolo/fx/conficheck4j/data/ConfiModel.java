@@ -22,18 +22,19 @@ import java.time.temporal.ChronoField;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.TreeSet;
 
 
 public class ConfiModel {
-    public final NetworkMonitor                               networkMonitor          = NetworkMonitor.INSTANCE;
-    public final ObservableList<ConferenceItem>               conferences             = FXCollections.observableArrayList();
-    public final ObservableMap<Integer, List<ConferenceItem>> conferencesPerMonth     = FXCollections.observableHashMap();
-    public final ObservableMap<Integer, List<ConferenceItem>> conferencesPerContinent = FXCollections.observableHashMap();
-    public final ObservableMap<Integer, List<ConferenceItem>> conferencesWithOpenCfp  = FXCollections.observableHashMap();
-    public final ObservableMap<Integer, List<ConferenceItem>> filteredConferences     = FXCollections.observableHashMap();
-    public final ObservableList<ProposalItem>                 proposals               = FXCollections.observableArrayList();
-    public final ObservableMap<String, Integer>               attendence              = FXCollections.observableHashMap();
-    public       ObjectProperty<ConferenceItem>               selectedConference      = new ObjectPropertyBase<>() {
+    public final NetworkMonitor                                  networkMonitor          = NetworkMonitor.INSTANCE;
+    public final ObservableList<ConferenceItem>                  conferences             = FXCollections.observableArrayList();
+    public final ObservableMap<Integer, TreeSet<ConferenceItem>> conferencesPerMonth     = FXCollections.observableHashMap();
+    public final ObservableMap<Integer, TreeSet<ConferenceItem>> conferencesPerContinent = FXCollections.observableHashMap();
+    public final ObservableMap<Integer, TreeSet<ConferenceItem>> conferencesWithOpenCfp  = FXCollections.observableHashMap();
+    public final ObservableMap<Integer, TreeSet<ConferenceItem>> filteredConferences     = FXCollections.observableHashMap();
+    public final ObservableList<ProposalItem>                    proposals               = FXCollections.observableArrayList();
+    public final ObservableMap<String, Integer>                  attendence              = FXCollections.observableHashMap();
+    public       ObjectProperty<ConferenceItem>                  selectedConference      = new ObjectPropertyBase<>() {
         @Override protected void invalidated() { }
         @Override public Object getBean()      { return ConfiModel.this; }
         @Override public String getName()      { return "selectedConference"; }
@@ -105,7 +106,7 @@ public class ConfiModel {
         this.conferences.forEach(conference -> {
             final ZonedDateTime date  = ZonedDateTime.ofInstant(conference.getDate(), ZoneId.systemDefault());
             final Integer       month = date.get(ChronoField.MONTH_OF_YEAR);
-            if (!conferencesPerMonth.containsKey(month)) { conferencesPerMonth.put(month, new ArrayList<>()); }
+            if (!conferencesPerMonth.containsKey(month)) { conferencesPerMonth.put(month, new TreeSet<>()); }
             conferencesPerMonth.get(month).add(conference);
         });
         this.conferencesPerContinent.clear();

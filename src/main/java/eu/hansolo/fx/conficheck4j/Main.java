@@ -13,6 +13,7 @@ import eu.hansolo.fx.conficheck4j.tools.Helper;
 import eu.hansolo.fx.conficheck4j.tools.IsoCountries;
 import eu.hansolo.fx.conficheck4j.tools.PersistentToggleGroup;
 import eu.hansolo.fx.conficheck4j.tools.PropertyManager;
+import eu.hansolo.fx.conficheck4j.views.CalendarView;
 import eu.hansolo.fx.conficheck4j.views.ConferenceView;
 import eu.hansolo.jdktools.versioning.VersionNumber;
 import javafx.application.Application;
@@ -42,7 +43,10 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoField;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.TreeSet;
 
 
 public class Main extends Application {
@@ -56,6 +60,7 @@ public class Main extends Application {
     private             ToggleButton              attendingToggleButton = Factory.createToggleButton(Filter.ATTENDING.getName(), Constants.STD_FONT_SIZE);
     private             ToggleButton              cfpOpenToggleButton   = Factory.createToggleButton(Filter.CFP_OPEN.getName(), Constants.STD_FONT_SIZE);
     private             VBox                      conferencesVBox;
+    private             CalendarView              calendarView;
     private             VBox                      vBox;
     private             StackPane                 pane;
     private             ObjectProperty<Continent> selectedContinent;
@@ -92,22 +97,29 @@ public class Main extends Application {
         allToggleButton.setSelected(true);
         HBox filterButtons = new HBox(0, Factory.createSpacer(Orientation.HORIZONTAL), allToggleButton, speakingToggleButton, attendingToggleButton, cfpOpenToggleButton, Factory.createSpacer(Orientation.HORIZONTAL));
 
-
         // Conferences
         conferencesVBox = new VBox(0);
         conferencesVBox.setAlignment(Pos.CENTER);
         conferencesVBox.setFillWidth(true);
         ScrollPane scrollPane = new ScrollPane(conferencesVBox);
-        //scrollPane.setFitToHeight(true);
-        //scrollPane.setFitToWidth(true);
         scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
+        scrollPane.setMinWidth(ConferenceView.MINIMUM_WIDTH + 40);
+        scrollPane.setMinHeight(325);
+        scrollPane.setFitToWidth(true);
 
-        vBox = new VBox(10, continentBox, filterButtons, scrollPane);
+        calendarView = new CalendarView(Main.this, this.model);
+        calendarView.setMinWidth(ConferenceView.MINIMUM_WIDTH + 40);
+        calendarView.setMinHeight(120);
+
+        vBox = new VBox(10, continentBox, filterButtons, scrollPane, calendarView);
+        vBox.setMinWidth(ConferenceView.MINIMUM_WIDTH + 40);
 
         this.pane = new StackPane(vBox);
         pane.getStyleClass().add("confi-check");
         //pane.setStyle("-fx-base: " + (eu.hansolo.fx.conficheck4j.tools.Constants.IS_DARK_MODE ? "#202020" : "#ececec"));
         pane.setPadding(new Insets(10, 10, 10, 10));
+        pane.setMinSize(600, 720);
 
         this.selectedContinent = new ObjectPropertyBase<>(Continent.ALL) {
             @Override protected void invalidated() { updateView(); }
@@ -140,16 +152,17 @@ public class Main extends Application {
     @Override public void start(final Stage stage) {
         initOnFXApplicationThread();
 
-        Scene scene = new Scene(pane, 600, 400);
+        Scene scene = new Scene(pane, 600, 720);
         scene.getStylesheets().add(Main.class.getResource("conficheck4j.css").toExternalForm());
-
         stage.setScene(scene);
         stage.setTitle("ConfiCheck " + Main.VERSION);
-        stage.setResizable(false);
+        stage.setMinWidth(ConferenceView.MINIMUM_WIDTH + 60);
+        stage.setMinHeight(600);
         stage.show();
         stage.centerOnScreen();
 
         fetchConferences();
+        calendarView.setToInitialPosition();
     }
 
     @Override public void stop() {
@@ -167,13 +180,12 @@ public class Main extends Application {
                 final ZonedDateTime date  = ZonedDateTime.ofInstant(conference.getDate(), ZoneId.systemDefault());
                 final Integer       month = date.get(ChronoField.MONTH_OF_YEAR);
                 if (!this.model.conferencesPerMonth.containsKey(month)) {
-                    this.model.conferencesPerMonth.put(month, new ArrayList<>());
-                    this.model.conferencesPerContinent.put(month, new ArrayList<>());
+                    this.model.conferencesPerMonth.put(month, new TreeSet<>());
+                    this.model.conferencesPerContinent.put(month, new TreeSet<>());
                 }
                 this.model.conferencesPerMonth.get(month).add(conference);
                 this.model.conferencesPerContinent.get(month).add(conference);
             });
-
             switch (this.selectedFilter.get()) {
                 case ALL       -> {
                     this.model.filteredConferences.clear();
@@ -186,7 +198,7 @@ public class Main extends Application {
                         final Integer       month = date.get(ChronoField.MONTH_OF_YEAR);
                         if (this.model.attendence.containsKey(conference.getId())) {
                             if (this.model.attendence.get(conference.getId()) != AttendingStatus.SPEAKING.id) { return; }
-                            if (!this.model.filteredConferences.containsKey(month)) { this.model.filteredConferences.put(month, new ArrayList<>()); }
+                            if (!this.model.filteredConferences.containsKey(month)) { this.model.filteredConferences.put(month, new TreeSet<>()); }
                             this.model.filteredConferences.get(month).add(conference);
                         }
                     });
@@ -198,7 +210,7 @@ public class Main extends Application {
                         final Integer       month = date.get(ChronoField.MONTH_OF_YEAR);
                         if (this.model.attendence.containsKey(conference.getId())) {
                             if (this.model.attendence.get(conference.getId()) != AttendingStatus.ATTENDING.id) { return; }
-                            if (!this.model.filteredConferences.containsKey(month)) { this.model.filteredConferences.put(month, new ArrayList<>()); }
+                            if (!this.model.filteredConferences.containsKey(month)) { this.model.filteredConferences.put(month, new TreeSet<>()); }
                             this.model.filteredConferences.get(month).add(conference);
                         }
                     });
@@ -206,12 +218,12 @@ public class Main extends Application {
                 case CFP_OPEN  -> {
                     for (Integer month : this.model.conferencesPerContinent.keySet()) {
                         if (this.model.conferencesPerContinent.get(month).isEmpty()) { continue; }
-                        this.model.filteredConferences.put(month, this.model.conferencesPerContinent.get(month)
-                                                                                                      .stream()
-                                                                                                      .filter(conference -> conference.getCfpDate().isPresent())
-                                                                                                      .filter(conference -> Helper.getDatesFromJavaConferenceDate(conference.getCfpDate().get()).length > 0 && Helper.getDatesFromJavaConferenceDate(conference.getCfpDate().get())[0].isPresent())
-                                                                                                      .filter(conference -> Helper.isCfpOpen(ZonedDateTime.ofInstant(Helper.getDatesFromJavaConferenceDate(conference.getCfpDate().get())[0].get(), ZoneId.systemDefault()).toLocalDate()))
-                                                                                                      .toList());
+                        this.model.filteredConferences.put(month, (TreeSet<ConferenceItem>) this.model.conferencesPerContinent.get(month)
+                                                                                                                              .stream()
+                                                                                                                              .filter(conference -> conference.getCfpDate().isPresent())
+                                                                                                                              .filter(conference -> Helper.getDatesFromJavaConferenceDate(conference.getCfpDate().get()).length > 0 && Helper.getDatesFromJavaConferenceDate(conference.getCfpDate().get())[0].isPresent())
+                                                                                                                              .filter(conference -> Helper.isCfpOpen(ZonedDateTime.ofInstant(Helper.getDatesFromJavaConferenceDate(conference.getCfpDate().get())[0].get(), ZoneId.systemDefault()).toLocalDate()))
+                                                                                                                              .toList());
                     }
                 }
             }
@@ -219,8 +231,8 @@ public class Main extends Application {
             final int currentMonth = LocalDate.now().getMonthValue();
             List<TitledPane> filtered  = new ArrayList<>();
             this.model.filteredConferences.entrySet().forEach(entry -> {
-                final Integer              month              = entry.getKey();
-                final List<ConferenceItem> conferencesInMonth = entry.getValue();
+                final Integer                 month              = entry.getKey();
+                final TreeSet<ConferenceItem> conferencesInMonth = entry.getValue();
                 VBox monthBox = new VBox();
                 conferencesInMonth.forEach(conference -> monthBox.getChildren().add(new ConferenceView(Main.this, this.model, conference)));
                 TitledPane monthPane = new TitledPane(Constants.MONTHS[month - 1], monthBox);

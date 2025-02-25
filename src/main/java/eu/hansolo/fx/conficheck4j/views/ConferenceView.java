@@ -69,12 +69,12 @@ import java.util.UUID;
  */
 @DefaultProperty("children")
 public class ConferenceView extends Region {
-    private static final double                         PREFERRED_WIDTH  = 540;
-    private static final double                         PREFERRED_HEIGHT = 150;
-    private static final double                         MINIMUM_WIDTH    = 400;
-    private static final double                         MINIMUM_HEIGHT   = 50;
-    private static final double                         MAXIMUM_WIDTH    = 1024;
-    private static final double                         MAXIMUM_HEIGHT   = 1024;
+    public  static final double                         PREFERRED_WIDTH  = 540;
+    public  static final double                         PREFERRED_HEIGHT = 150;
+    public  static final double                         MINIMUM_WIDTH    = 400;
+    public  static final double                         MINIMUM_HEIGHT   = 50;
+    public  static final double                         MAXIMUM_WIDTH    = 1024;
+    public  static final double                         MAXIMUM_HEIGHT   = 1024;
     private              Main                           main;
     private              ConfiModel                     model;
     private              ObjectProperty<ConferenceItem> conference;
