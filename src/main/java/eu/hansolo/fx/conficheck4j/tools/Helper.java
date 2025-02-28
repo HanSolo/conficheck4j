@@ -7,9 +7,22 @@ import com.google.gson.JsonObject;
 import eu.hansolo.fx.conficheck4j.data.ConferenceItem;
 import eu.hansolo.fx.conficheck4j.data.JavaConference;
 import eu.hansolo.fx.conficheck4j.data.ProposalItem;
+import eu.hansolo.fx.conficheck4j.data.SpeakerItem;
+import javafx.embed.swing.SwingFXUtils;
+import javafx.scene.image.Image;
+import javafx.scene.image.PixelFormat;
+import javafx.scene.image.PixelReader;
+import javafx.scene.image.WritablePixelFormat;
 import javafx.scene.paint.Color;
+import javafx.stage.FileChooser;
+import javafx.stage.FileChooser.ExtensionFilter;
+import javafx.stage.Stage;
 
+import javax.imageio.ImageIO;
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -20,6 +33,7 @@ import java.net.http.HttpClient.Redirect;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
+import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -42,6 +56,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.concurrent.CompletionException;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import static eu.hansolo.jdktools.util.Helper.getOperatingSystem;
@@ -94,6 +109,36 @@ public class Helper {
         return conferences;
     }
 
+    public static final List<ProposalItem> parseProposalItemsJson(final String jsonText) {
+        final List<ProposalItem> proposals          = new ArrayList<>();
+        if (null == jsonText || jsonText.isEmpty()) { return proposals; }
+        final Gson      gson                = new Gson();
+        final JsonArray proposalItemArray = gson.fromJson(jsonText, JsonElement.class).getAsJsonArray();
+        proposalItemArray.forEach(jsonElement -> {
+            final JsonObject     jsonObject = jsonElement.getAsJsonObject();
+            final ProposalItem conference = ProposalItem.fromJsonObject(jsonObject);
+            if (null != conference) { proposals.add(conference); }
+        });
+        return proposals;
+    }
+
+    public static final SpeakerItem loadSpeakerItem() {
+        if (new File(Constants.SPEAKER_ITEM_PATH).exists()) {
+            try {
+                final String jsonText = readTextFile(Constants.SPEAKER_ITEM_PATH, Charset.defaultCharset());
+                return SpeakerItem.fromJsonString(jsonText);
+            } catch (IOException e) {
+                return new SpeakerItem("", "", "", "");
+            }
+        } else {
+            return new SpeakerItem("", "", "", "");
+        }
+    }
+    public static final void saveSpeakerItem(final SpeakerItem speakerItem) {
+        final String jsonText = speakerItem.toJsonString();
+        saveTextFile(jsonText, Constants.SPEAKER_ITEM_PATH);
+    }
+
     public static final String readTextFile(final String filename, final Charset charset) throws IOException {
         if (null == filename || filename.isEmpty()) { throw new IllegalArgumentException("Filename cannot be null or empty"); }
         return Files.readString(Paths.get(filename), null == charset ? Charset.forName("UTF-8") : charset);
@@ -113,12 +158,35 @@ public class Helper {
 
     public static final void saveConferenceItems(final List<ConferenceItem> conferences) {
         Helper.saveTextFile(new StringBuilder().append(conferences.stream().map(conferenceItem -> conferenceItem.toJsonString()).collect(
-        Collectors.joining(eu.hansolo.toolbox.Constants.COMMA, eu.hansolo.toolbox.Constants.SQUARE_BRACKET_OPEN, eu.hansolo.toolbox.Constants.SQUARE_BRACKET_CLOSE))).toString(), eu.hansolo.toolbox.Constants.HOME_FOLDER + eu.hansolo.fx.conficheck4j.tools.Constants.CONFERENCE_ITEMS_FILENAME);
+        Collectors.joining(eu.hansolo.toolbox.Constants.COMMA, eu.hansolo.toolbox.Constants.SQUARE_BRACKET_OPEN, eu.hansolo.toolbox.Constants.SQUARE_BRACKET_CLOSE))).toString(), eu.hansolo.toolbox.Constants.HOME_FOLDER + Constants.APP_NAME + File.separator + eu.hansolo.fx.conficheck4j.tools.Constants.CONFERENCE_ITEMS_FILENAME);
     }
 
     public static final void saveProposalItems(final List<ProposalItem> proposals) {
         Helper.saveTextFile(new StringBuilder().append(proposals.stream().map(proposalItem -> proposalItem.toJsonString()).collect(
-        Collectors.joining(eu.hansolo.toolbox.Constants.COMMA, eu.hansolo.toolbox.Constants.SQUARE_BRACKET_OPEN, eu.hansolo.toolbox.Constants.SQUARE_BRACKET_CLOSE))).toString(), eu.hansolo.toolbox.Constants.HOME_FOLDER + eu.hansolo.fx.conficheck4j.tools.Constants.PROPOSAL_ITEMS_FILENAME);
+        Collectors.joining(eu.hansolo.toolbox.Constants.COMMA, eu.hansolo.toolbox.Constants.SQUARE_BRACKET_OPEN, eu.hansolo.toolbox.Constants.SQUARE_BRACKET_CLOSE))).toString(), eu.hansolo.toolbox.Constants.HOME_FOLDER + Constants.APP_NAME + File.separator +  eu.hansolo.fx.conficheck4j.tools.Constants.PROPOSAL_ITEMS_FILENAME);
+    }
+
+    public static final Optional<Image> loadSpeakerImage() {
+        return new File(Constants.SPEAKER_IMAGE_PATH).exists() ? Optional.of(new Image("file://" + Constants.SPEAKER_IMAGE_PATH)) : Optional.empty();
+    }
+    public static final Optional<Image> selectImage(final Stage stage) {
+        final FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Select Image");
+        fileChooser.getExtensionFilters().add(new ExtensionFilter("Image File","*.jpg"));
+        final File file = fileChooser.showOpenDialog(stage);
+
+        if (file != null) {
+            // where my problem is
+            final Image img     = new Image(file.toURI().toString());
+            final File  newFile = new File(Constants.HOME_FOLDER + Constants.APP_NAME + File.separator + Constants.SPEAKER_IMAGE_FILENAME);
+            try {
+                ImageIO.write(SwingFXUtils.fromFXImage(img, null), "jpg", newFile);
+            } catch (IOException ex) {
+                return Optional.empty();
+            }
+            return Optional.of(img);
+        }
+        return Optional.empty();
     }
 
     public static final Optional<Instant>[] getDatesFromJavaConferenceDate(final String date) {

@@ -3,6 +3,7 @@ package eu.hansolo.fx.conficheck4j.data;
 import eu.hansolo.fx.conficheck4j.tools.Constants;
 import eu.hansolo.fx.conficheck4j.tools.Helper;
 import eu.hansolo.fx.conficheck4j.tools.NetworkMonitor;
+import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ObjectPropertyBase;
@@ -12,6 +13,7 @@ import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.time.Instant;
@@ -21,7 +23,6 @@ import java.time.temporal.ChronoField;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.TreeSet;
 
 
@@ -39,12 +40,12 @@ public class ConfiModel {
         @Override public Object getBean()      { return ConfiModel.this; }
         @Override public String getName()      { return "selectedConference"; }
     };
-    public       ObjectProperty<ProposalItem>                 selectedProposal        = new ObjectPropertyBase<>() {
+    public       ObjectProperty<ProposalItem>                    selectedProposal        = new ObjectPropertyBase<>() {
         @Override protected void invalidated() { }
         @Override public Object getBean()      { return ConfiModel.this; }
         @Override public String getName()      { return "selectedProposal"; }
     };
-    public       BooleanProperty                              update                  = new SimpleBooleanProperty(false);
+    public       BooleanProperty                                 update                  = new SimpleBooleanProperty(false);
 
 
     public ConfiModel() {
@@ -69,14 +70,18 @@ public class ConfiModel {
 
 
     private void loadConferenceItems() {
-        String jsonText = "";
         try {
-            jsonText = Helper.readTextFile(Constants.HOME_FOLDER + Constants.CONFERENCE_ITEMS_FILENAME, Charset.forName("UTF-8"));
+            final String jsonText = Helper.readTextFile(Constants.HOME_FOLDER + Constants.APP_NAME + File.separator + Constants.CONFERENCE_ITEMS_FILENAME, Charset.forName("UTF-8"));
+            final List<ConferenceItem> conferenceItems = Helper.parseConferenceItemsJson(jsonText);
+            conferences.addAll(conferenceItems);
         } catch (IOException e) { }
-        if (null == jsonText || jsonText.isBlank()) { return; }
-        final List<ConferenceItem> conferenceItems = Helper.parseConferenceItemsJson(jsonText);
-        conferences.setAll(conferenceItems);
-        return;
+
+        if (this.networkMonitor.isOnline()) {
+            final String               javaConferencesJsonText = Helper.getTextFromUrl(Constants.JAVA_CONFERENCES_JSON_URL);
+            final List<JavaConference> conferences             = Helper.parseJavaConferencesJson(javaConferencesJsonText);
+            this.update(conferences);
+        }
+        this.update.set(!this.update.get());
     }
 
     public final void update(final List<JavaConference> javaConferences) {

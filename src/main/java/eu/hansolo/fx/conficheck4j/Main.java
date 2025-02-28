@@ -2,7 +2,7 @@ package eu.hansolo.fx.conficheck4j;
 
 import eu.hansolo.fx.conficheck4j.data.ConferenceItem;
 import eu.hansolo.fx.conficheck4j.data.ConfiModel;
-import eu.hansolo.fx.conficheck4j.data.JavaConference;
+import eu.hansolo.fx.conficheck4j.data.SpeakerItem;
 import eu.hansolo.fx.conficheck4j.fonts.Fonts;
 import eu.hansolo.fx.conficheck4j.tools.Constants;
 import eu.hansolo.fx.conficheck4j.tools.Constants.AttendingStatus;
@@ -16,38 +16,64 @@ import eu.hansolo.fx.conficheck4j.tools.PropertyManager;
 import eu.hansolo.fx.conficheck4j.views.CalendarView;
 import eu.hansolo.fx.conficheck4j.views.ConferenceView;
 import eu.hansolo.jdktools.versioning.VersionNumber;
+import javafx.animation.FadeTransition;
+import javafx.animation.Interpolator;
+import javafx.animation.PauseTransition;
+import javafx.animation.SequentialTransition;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.BooleanPropertyBase;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ObjectPropertyBase;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
 import javafx.scene.control.TitledPane;
 import javafx.scene.control.ToggleButton;
+import javafx.scene.control.Tooltip;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
+import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.paint.CycleMethod;
+import javafx.scene.paint.LinearGradient;
+import javafx.scene.paint.Stop;
+import javafx.scene.shape.Circle;
+import javafx.scene.shape.Rectangle;
+import javafx.scene.shape.StrokeType;
 import javafx.scene.text.Text;
 import javafx.stage.Popup;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
-import java.nio.charset.Charset;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoField;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
+
+import static eu.hansolo.toolbox.Constants.NEW_LINE;
 
 
 public class Main extends Application {
@@ -64,8 +90,12 @@ public class Main extends Application {
     private             CalendarView              calendarView;
     private             VBox                      vBox;
     private             StackPane                 pane;
+    private             Stage                     stage;
     private             ObjectProperty<Continent> selectedContinent;
     private             ObjectProperty<Filter>    selectedFilter;
+    private             BooleanProperty           speakerInfoVisible;
+    private             Clipboard                 clipboard;
+    private             ClipboardContent          clipboardContent;
 
 
     @Override public void init() {
@@ -113,7 +143,15 @@ public class Main extends Application {
         calendarView.setMinWidth(ConferenceView.MINIMUM_WIDTH + 40);
         calendarView.setMinHeight(120);
 
-        vBox = new VBox(10, continentBox, filterButtons, scrollPane, calendarView);
+        Button speakerInfoButton = Factory.createButton("Speaker Info", "Show speaker info", Constants.STD_FONT_SIZE);
+        Button exportButton      = Factory.createButton("Export", "Export conferences visited", Constants.STD_FONT_SIZE);
+        Button proposalsButton   = Factory.createButton("Proposals", "Show proposals", Constants.STD_FONT_SIZE);
+
+        speakerInfoButton.setOnAction(e -> this.speakerInfoVisible.set(true));
+
+        HBox buttonBox = new HBox(5, speakerInfoButton, Factory.createSpacer(Orientation.HORIZONTAL), exportButton, Factory.createSpacer(Orientation.HORIZONTAL), proposalsButton);
+
+        vBox = new VBox(10, continentBox, filterButtons, scrollPane, calendarView, buttonBox);
         vBox.setMinWidth(ConferenceView.MINIMUM_WIDTH + 40);
 
         this.pane = new StackPane(vBox);
@@ -122,15 +160,20 @@ public class Main extends Application {
         pane.setPadding(new Insets(10, 10, 10, 10));
         pane.setMinSize(600, 720);
 
-        this.selectedContinent = new ObjectPropertyBase<>(Continent.ALL) {
+        this.selectedContinent  = new ObjectPropertyBase<>(Continent.ALL) {
             @Override protected void invalidated() { updateView(); }
             @Override public Object getBean() { return Main.this; }
             @Override public String getName() { return "selectedContinent"; }
         };
-        this.selectedFilter = new ObjectPropertyBase<>(Filter.ALL) {
+        this.selectedFilter     = new ObjectPropertyBase<>(Filter.ALL) {
             @Override protected void invalidated() { updateView(); }
             @Override public Object getBean() { return Main.this; }
             @Override public String getName() { return "selectedFilter"; }
+        };
+        this.speakerInfoVisible = new BooleanPropertyBase(Boolean.FALSE) {
+            @Override protected void invalidated() { if (get()) { openSpeakerInfo(); } }
+            @Override public Object getBean() { return Main.this; }
+            @Override public String getName() { return "speakerInfoVisible"; }
         };
 
         registerListeners();
@@ -143,14 +186,19 @@ public class Main extends Application {
         this.speakingToggleButton.selectedProperty().addListener((o, ov, nv) -> this.selectedFilter.set(Filter.SPEAKING));
         this.attendingToggleButton.selectedProperty().addListener((o, ov, nv) -> this.selectedFilter.set(Filter.ATTENDING));
         this.cfpOpenToggleButton.selectedProperty().addListener((o, ov, nv) -> this.selectedFilter.set(Filter.CFP_OPEN));
+
     }
 
     private void initOnFXApplicationThread() {
         searchResultPopup   = new Popup();
         searchResultPopup.getScene().getStylesheets().add(Main.class.getResource("conficheck4j.css").toExternalForm());
+
+        this.clipboard        = Clipboard.getSystemClipboard();
+        this.clipboardContent = new ClipboardContent();
     }
 
     @Override public void start(final Stage stage) {
+        this.stage = stage;
         initOnFXApplicationThread();
 
         Scene scene = new Scene(pane, 500, 570);
@@ -164,6 +212,7 @@ public class Main extends Application {
 
         fetchConferences();
         calendarView.setToInitialPosition();
+        updateView();
     }
 
     @Override public void stop() {
@@ -250,13 +299,258 @@ public class Main extends Application {
 
     private void fetchConferences() {
         try {
-            String               jsonText        = Helper.readTextFile("/Users/hansolo/Desktop/javaconferences.json", Charset.defaultCharset());
+            //String               jsonText        = Helper.readTextFile("/Users/hansolo/Desktop/javaconferences.json", Charset.defaultCharset());
             //String               jsonText        = Helper.getTextFromUrl(Constants.JAVA_CONFERENCES_JSON_URL);
-            List<JavaConference> conferences     = Helper.parseJavaConferencesJson(jsonText);
-            this.model.update(conferences);
+            //List<JavaConference> conferences     = Helper.parseJavaConferencesJson(jsonText);
+            //this.model.update(conferences);
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private void openSpeakerInfo() {
+        SpeakerItem speakerItem      = Helper.loadSpeakerItem();
+        Stage       speakerInfoStage = new Stage();
+        speakerInfoStage.setTitle("JVM Inventory Report Viewer");
+
+        // Copied Feedback pane
+        Region checkmarkIcon = new Region();
+        checkmarkIcon.getStyleClass().add("checkmark-icon");
+        checkmarkIcon.setFocusTraversable(false);
+        checkmarkIcon.setPrefSize(64, 64);
+        checkmarkIcon.setMinSize(64, 64);
+        checkmarkIcon.setMaxSize(64, 64);
+
+        Rectangle checkmarkIconRect = new Rectangle(128, 128);
+        checkmarkIconRect.setArcWidth(30);
+        checkmarkIconRect.setArcHeight(30);
+        checkmarkIconRect.setFill(Color.color(0.0, 0.0, 0.0, 0.5));
+
+        Text copiedText = new Text("Copied");
+        copiedText.setFont(Fonts.avenirNextLtProRegular(Constants.STD_FONT_SIZE));
+        copiedText.setFill(Color.WHITE);
+        copiedText.setTranslateY(50);
+
+        StackPane copiedFeedbackPane = new StackPane(checkmarkIconRect, checkmarkIcon, copiedText);
+        copiedFeedbackPane.setMouseTransparent(true);
+        copiedFeedbackPane.setOpacity(0.0);
+
+        // Speaker Image
+        Optional<Image> speakerImage = Helper.loadSpeakerImage();
+
+        ImageView speakerImageView = speakerImage.isPresent() ? new ImageView(speakerImage.get()) : new ImageView();
+        speakerImageView.setFitHeight(100);
+        speakerImageView.setFitWidth(100);
+        speakerImageView.setClip(new Circle(50, 50, 50));
+
+        Circle backgroundCircle = new Circle(50, 50, 50);
+        backgroundCircle.setFill(Color.TRANSPARENT);
+        backgroundCircle.setStroke(Color.BLACK);
+        backgroundCircle.setStrokeWidth(5);
+        backgroundCircle.setStrokeType(StrokeType.OUTSIDE);
+
+        StackPane speakerImagePane = new StackPane(backgroundCircle);
+        speakerImagePane.getChildren().add(speakerImageView);
+        if (speakerImage.isEmpty()) {
+            speakerImagePane.setBackground(new Background(new BackgroundFill(new LinearGradient(0, 0, 0, 1, true, CycleMethod.NO_CYCLE, new Stop(0, Color.GRAY), new Stop(1, Color.DARKGRAY)), new CornerRadii(48), Insets.EMPTY)));
+        }
+
+        Circle circle = new Circle(12, 12, 12);
+        circle.setFill(Color.web("#3478f6"));
+        Region photoIcon = new Region();
+        photoIcon.getStyleClass().add("photo-icon");
+        photoIcon.setFocusTraversable(false);
+        photoIcon.setPrefSize(16, 16);
+        photoIcon.setMinSize(16, 16);
+        photoIcon.setMaxSize(16, 16);
+        Tooltip.install(photoIcon, new Tooltip("Select a speaker photo"));
+        StackPane photoIconPane = new StackPane(circle, photoIcon);
+        photoIconPane.setTranslateX(35.75);
+        photoIconPane.setTranslateY(35.75);
+
+        photoIconPane.setOnMousePressed(e -> {
+            Optional<Image> newSpeakerImage = Helper.selectImage(this.stage);
+            if (newSpeakerImage.isPresent()) {
+                speakerImagePane.setBackground(Background.EMPTY);
+                speakerImageView.setImage(newSpeakerImage.get());
+            }
+        });
+
+        speakerImagePane.getChildren().add(photoIconPane);
+        speakerImagePane.setPrefSize(100, 100);
+
+        Region copyImageIcon = new Region();
+        copyImageIcon.getStyleClass().add("copy-icon");
+        copyImageIcon.setFocusTraversable(false);
+        copyImageIcon.setPrefSize(16, 16);
+        copyImageIcon.setMinSize(16, 16);
+        copyImageIcon.setMaxSize(16, 16);
+
+        Button copySpeakerImageButton = Factory.createButton("Copy image", "Copy speaker image to clipboard", Constants.STD_FONT_SIZE);
+        copySpeakerImageButton.setGraphic(copyImageIcon);
+        copySpeakerImageButton.setOnAction(e -> {
+            clipboard.clear();
+            clipboardContent.clear();
+            clipboardContent.putImage(speakerImageView.getImage());
+            clipboard.setContent(clipboardContent);
+            copiedFeedbackPane.setOpacity(1.0);
+            fadeOutPane(copiedFeedbackPane);
+        });
+
+        // Name
+        Region copyNameIcon = new Region();
+        copyNameIcon.getStyleClass().add("copy-icon");
+        copyNameIcon.setFocusTraversable(false);
+        copyNameIcon.setPrefSize(16, 16);
+        copyNameIcon.setMinSize(16, 16);
+        copyNameIcon.setMaxSize(16, 16);
+        Tooltip.install(copyNameIcon, new Tooltip("Copy speaker name to clipboard"));
+
+        Label     speakerNameLabel     = Factory.createLabel("Name", Constants.GRAY, Fonts.avenirNextLtProDemi(Constants.STD_FONT_SIZE), Pos.CENTER_RIGHT);
+        TextField speakerNameTextField = Factory.createTextField("Your name", "Speaker name", Constants.STD_FONT_SIZE);
+        HBox      speakerNameHBox      = new HBox(speakerNameLabel, Factory.createSpacer(Orientation.HORIZONTAL), copyNameIcon);
+        VBox      speakerNameBox       = new VBox(speakerNameHBox, speakerNameTextField);
+        speakerNameTextField.setText(speakerItem.getName());
+        copyNameIcon.setOnMousePressed(e -> {
+            clipboard.clear();
+            clipboardContent.clear();
+            clipboardContent.putString(speakerNameTextField.getText());
+            clipboard.setContent(clipboardContent);
+            copiedFeedbackPane.setOpacity(1.0);
+            fadeOutPane(copiedFeedbackPane);
+        });
+
+        // BlueSky
+        Region copyBlueSkyIcon = new Region();
+        copyBlueSkyIcon.getStyleClass().add("copy-icon");
+        copyBlueSkyIcon.setFocusTraversable(false);
+        copyBlueSkyIcon.setPrefSize(16, 16);
+        copyBlueSkyIcon.setMinSize(16, 16);
+        copyBlueSkyIcon.setMaxSize(16, 16);
+        Tooltip.install(copyBlueSkyIcon, new Tooltip("Copy speaker bluesky link to clipboard"));
+
+        Label     blueSkyLabel     = Factory.createLabel("BlueSky", Constants.GRAY, Fonts.avenirNextLtProDemi(Constants.STD_FONT_SIZE), Pos.CENTER_RIGHT);
+        TextField blueSkyTextField = Factory.createTextField("Your BlueSky account", "Speaker bluesky name", Constants.STD_FONT_SIZE);
+        HBox      blueSkyHBox      = new HBox(blueSkyLabel, Factory.createSpacer(Orientation.HORIZONTAL), copyBlueSkyIcon);
+        VBox      blueSkyBox       = new VBox(blueSkyHBox, blueSkyTextField);
+        blueSkyTextField.setText(speakerItem.getBluesky());
+        copyBlueSkyIcon.setOnMousePressed(e -> {
+            clipboard.clear();
+            clipboardContent.clear();
+            clipboardContent.putString("https://bsky.app/profile/" + blueSkyTextField.getText());
+            clipboard.setContent(clipboardContent);
+            copiedFeedbackPane.setOpacity(1.0);
+            fadeOutPane(copiedFeedbackPane);
+        });
+
+        // Bio
+        Region copyBioIcon = new Region();
+        copyBioIcon.getStyleClass().add("copy-icon");
+        copyBioIcon.setFocusTraversable(false);
+        copyBioIcon.setPrefSize(16, 16);
+        copyBioIcon.setMinSize(16, 16);
+        copyBioIcon.setMaxSize(16, 16);
+        Tooltip.install(copyBioIcon, new Tooltip("Copy speaker bio to clipboard"));
+
+        Label    bioLabel     = Factory.createLabel("Bio", Constants.GRAY, Fonts.avenirNextLtProDemi(Constants.STD_FONT_SIZE), Pos.CENTER_RIGHT);
+        TextArea bioTextArea = Factory.createRegularTextArea("Your bio", Constants.BLACK, Constants.STD_FONT_SIZE);
+        HBox     bioHBox      = new HBox(bioLabel, Factory.createSpacer(Orientation.HORIZONTAL), copyBioIcon);
+        VBox     bioBox       = new VBox(bioHBox, bioTextArea);
+        bioTextArea.setText(speakerItem.getBio());
+        copyBioIcon.setOnMousePressed(e -> {
+            clipboard.clear();
+            clipboardContent.clear();
+            clipboardContent.putString(bioTextArea.getText());
+            clipboard.setContent(clipboardContent);
+            copiedFeedbackPane.setOpacity(1.0);
+            fadeOutPane(copiedFeedbackPane);
+        });
+
+        // Experience
+        Region copyExperienceIcon = new Region();
+        copyExperienceIcon.getStyleClass().add("copy-icon");
+        copyExperienceIcon.setFocusTraversable(false);
+        copyExperienceIcon.setPrefSize(16, 16);
+        copyExperienceIcon.setMinSize(16, 16);
+        copyExperienceIcon.setMaxSize(16, 16);
+        Tooltip.install(copyExperienceIcon, new Tooltip("Copy speaker experience to clipboard"));
+
+        Label    experienceLabel    = Factory.createLabel("Experience", Constants.GRAY, Fonts.avenirNextLtProDemi(Constants.STD_FONT_SIZE), Pos.CENTER_RIGHT);
+        TextArea experienceTextArea = Factory.createRegularTextArea("Your experience as a speaker", Constants.BLACK, Constants.STD_FONT_SIZE);
+        HBox     experienceHBox     = new HBox(experienceLabel, Factory.createSpacer(Orientation.HORIZONTAL), copyExperienceIcon);
+        VBox     experienceBox      = new VBox(experienceHBox, experienceTextArea);
+        experienceTextArea.setText(speakerItem.getExperience());
+        copyExperienceIcon.setOnMousePressed(e -> {
+            clipboard.clear();
+            clipboardContent.clear();
+            clipboardContent.putString(experienceTextArea.getText());
+            clipboard.setContent(clipboardContent);
+            copiedFeedbackPane.setOpacity(1.0);
+            fadeOutPane(copiedFeedbackPane);
+        });
+
+        Button copySpeakerInfoButton = Factory.createButton("Copy Speaker Info", "Copy complete speaker info", Constants.STD_FONT_SIZE);
+        copySpeakerInfoButton.setOnAction(e -> {
+           final StringBuilder speakerInfoBuilder = new StringBuilder();
+           speakerInfoBuilder.append("Name").append(NEW_LINE)
+                             .append(speakerNameTextField.getText()).append(NEW_LINE)
+                             .append(NEW_LINE)
+                             .append("BlueSky").append(NEW_LINE)
+                             .append("https://bsky.app/profile/").append(blueSkyTextField.getText()).append(NEW_LINE)
+                             .append(NEW_LINE)
+                             .append("Bio").append(NEW_LINE)
+                             .append(bioTextArea.getText()).append(NEW_LINE)
+                             .append(NEW_LINE)
+                             .append("Experience").append(NEW_LINE)
+                             .append(experienceTextArea.getText());
+
+            clipboard.clear();
+            clipboardContent.clear();
+            clipboardContent.putString(speakerInfoBuilder.toString());
+            clipboard.setContent(clipboardContent);
+            copiedFeedbackPane.setOpacity(1.0);
+            fadeOutPane(copiedFeedbackPane);
+        });
+
+        Button closeButton = Factory.createButton("Close", "Close speaker info dialog", Constants.STD_FONT_SIZE);
+        closeButton.setOnAction(e -> {
+            speakerItem.setName(speakerNameTextField.getText());
+            speakerItem.setBluesky(blueSkyTextField.getText());
+            speakerItem.setBio(bioTextArea.getText());
+            speakerItem.setExperience(experienceTextArea.getText());
+            Helper.saveSpeakerItem(speakerItem);
+            speakerInfoStage.close();
+            speakerInfoVisible.set(false);
+        });
+        HBox   buttonBox = new HBox(copySpeakerInfoButton, Factory.createSpacer(Orientation.HORIZONTAL), closeButton);
+        buttonBox.setPadding(new Insets(10));
+
+        VBox  speakerInfoVBox  = new VBox(15, speakerImagePane, copySpeakerImageButton, speakerNameBox, blueSkyBox, bioBox, experienceBox, buttonBox);
+        speakerInfoVBox.setPadding(new Insets(10));
+        speakerInfoVBox.setAlignment(Pos.CENTER);
+        speakerInfoVBox.setPrefWidth(360);
+
+
+        Scene scene = new Scene(new StackPane(speakerInfoVBox, copiedFeedbackPane));
+        scene.getStylesheets().add(Main.class.getResource("conficheck4j.css").toExternalForm());
+
+        speakerInfoStage.setOnCloseRequest(e -> speakerInfoVisible.set(false));
+        speakerInfoStage.setScene(scene);
+        speakerInfoStage.show();
+        speakerInfoStage.setAlwaysOnTop(true);
+        speakerInfoStage.toFront();
+    }
+
+    private void fadeOutPane(final Pane pane) {
+        final PauseTransition pauseTransition = new PauseTransition(Duration.seconds(0.3));
+        final FadeTransition  fadeTransition  = new FadeTransition(Duration.millis(1000));
+        fadeTransition.setInterpolator(Interpolator.EASE_OUT);
+        fadeTransition.setNode(pane);
+        fadeTransition.setFromValue(1.0);
+        fadeTransition.setToValue(0.0);
+        fadeTransition.setAutoReverse(false);
+        SequentialTransition sequentialTransition = new SequentialTransition(pauseTransition, fadeTransition);
+        sequentialTransition.play();
     }
 
     public static void main(String[] args) {

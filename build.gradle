@@ -62,6 +62,7 @@ dependencies {
     implementation "org.openjfx:javafx-base:${javafxVersion}:${platform}"
     implementation "org.openjfx:javafx-graphics:${javafxVersion}:${platform}"
     implementation "org.openjfx:javafx-controls:${javafxVersion}:${platform}"
+    implementation "org.openjfx:javafx-swing:${javafxVersion}:${platform}"
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.3'
 }
 

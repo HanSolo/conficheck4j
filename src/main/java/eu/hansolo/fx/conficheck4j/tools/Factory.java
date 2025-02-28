@@ -6,6 +6,7 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.Tooltip;
@@ -68,7 +69,6 @@ public final class Factory {
         return txt;
     }
 
-
     public static final Text createRegularText(final String text, final Color textColor, final double fontSize) {
         return createText(text, textColor, Fonts.avenirNextLtProRegular(fontSize));
     }
@@ -117,7 +117,15 @@ public final class Factory {
         return textField;
     }
 
-
+    public static final TextArea createRegularTextArea(final String text, final Color textColor, final double fontSize) {
+        final TextArea textArea = new TextArea(text);
+        textArea.setFont(Fonts.avenirNextLtProRegular(fontSize));
+        textArea.setWrapText(true);
+        textArea.setEditable(true);
+        textArea.setFocusTraversable(false);
+        textArea.setPrefRowCount(5);
+        return textArea;
+    }
 
     public static final Region createRegion(final String styleClass) {
         Region region = new Region();

@@ -7,6 +7,7 @@ module eu.hansolo.fx.conficheck4j {
     requires javafx.base;
     requires javafx.graphics;
     requires javafx.controls;
+    requires javafx.swing;
 
     // 3rd Party
     requires transitive eu.hansolo.jdktools;
@@ -15,6 +16,7 @@ module eu.hansolo.fx.conficheck4j {
     requires transitive com.google.gson;
     requires kernel;
     requires io;
+    requires java.logging;
 
     exports eu.hansolo.fx.conficheck4j;
 }

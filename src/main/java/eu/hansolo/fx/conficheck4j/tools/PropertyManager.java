@@ -3,6 +3,7 @@ package eu.hansolo.fx.conficheck4j.tools;
 import eu.hansolo.fx.conficheck4j.Main;
 import eu.hansolo.jdktools.versioning.VersionNumber;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -27,7 +28,7 @@ public enum PropertyManager {
     PropertyManager() {
         properties = new Properties();
         // Load properties
-        final String jvmiviewerPropertiesFilePath = new StringBuilder(Constants.HOME_FOLDER).append(CONFICHECK).toString();
+        final String jvmiviewerPropertiesFilePath = new StringBuilder(Constants.HOME_FOLDER).append(Constants.APP_NAME).append(File.separator).append(CONFICHECK).toString();
 
         // Create properties file if not exists
         Path path = Paths.get(jvmiviewerPropertiesFilePath);
@@ -94,7 +95,7 @@ public enum PropertyManager {
 
     public void storeProperties() {
         if (null == properties) { return; }
-        final String propFilePath = new StringBuilder(Constants.HOME_FOLDER).append(CONFICHECK).toString();
+        final String propFilePath = new StringBuilder(Constants.HOME_FOLDER).append(Constants.APP_NAME).append(File.separator).append(CONFICHECK).toString();
         try (OutputStream output = new FileOutputStream(propFilePath)) {
             properties.store(output, null);
         } catch (IOException ex) {
@@ -117,7 +118,7 @@ public enum PropertyManager {
     }
 
     private void createProperties(Properties properties) {
-        final String propFilePath = new StringBuilder(Constants.HOME_FOLDER).append(CONFICHECK).toString();
+        final String propFilePath = new StringBuilder(Constants.HOME_FOLDER).append(Constants.APP_NAME).append(File.separator).append(CONFICHECK).toString();
         try (OutputStream output = new FileOutputStream(propFilePath)) {
             properties.store(output, null);
         } catch (IOException ex) {
