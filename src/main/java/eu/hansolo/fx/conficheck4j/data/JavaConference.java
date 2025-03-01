@@ -1,6 +1,7 @@
 package eu.hansolo.fx.conficheck4j.data;
 
 
+import eu.hansolo.fx.conficheck4j.tools.Constants.AttendingStatus;
 import eu.hansolo.fx.conficheck4j.tools.Constants.ConferenceType;
 import eu.hansolo.fx.conficheck4j.tools.Helper;
 
@@ -12,7 +13,7 @@ import java.util.Optional;
 
 public record JavaConference(String cfpEndDate, Coordinates coordinates, String locationName, Boolean hybrid, String cfpLink, String date, String name, String link) {
 
-    public ConferenceItem convertToConferenceItem() {
+    public ConferenceItem convertToConferenceItem(final ConfiModel model) {
         final String name         = this.name;
         final String location     = this.locationName;
         final String cityName     = this.locationName == null ? "" : Helper.getCityFromEventItem(this.locationName);
@@ -37,6 +38,6 @@ public record JavaConference(String cfpEndDate, Coordinates coordinates, String 
         final Optional<Double>    lat        = this.coordinates       == null ? Optional.empty() : Optional.of(this.coordinates.lat());
         final Optional<Double>    lon        = this.coordinates       == null ? Optional.empty() : Optional.of(this.coordinates.lon());
 
-        return new ConferenceItem(name, location, city, country, url, date, days, type.apiString, cfpUrl, cfpEndDate, lat, lon, List.of(), Map.of());
+        return new ConferenceItem(name, location, city, country, url, date, days, type.apiString, AttendingStatus.NOT_ATTENDING, cfpUrl, cfpEndDate, lat, lon, Map.of(), model);
     }
 }

@@ -90,7 +90,6 @@ public class Main extends Application {
     private             ToggleButton                 speakingToggleButton  = Factory.createToggleButton(Filter.SPEAKING.getName(), Constants.STD_FONT_SIZE);
     private             ToggleButton                 attendingToggleButton = Factory.createToggleButton(Filter.ATTENDING.getName(), Constants.STD_FONT_SIZE);
     private             ToggleButton                 cfpOpenToggleButton   = Factory.createToggleButton(Filter.CFP_OPEN.getName(), Constants.STD_FONT_SIZE);
-    private             ObservableList<ProposalItem> proposals             = FXCollections.observableArrayList();
     private             VBox                         conferencesVBox;
     private             CalendarView                 calendarView;
     private             VBox                         vBox;
@@ -115,6 +114,7 @@ public class Main extends Application {
             continentsComboBox.getItems().add(continent.name);
         }
         continentsComboBox.getSelectionModel().select(0);
+        continentsComboBox.setMinWidth(120);
         continentsComboBox.getItems().forEach(continent -> continentText.setFont(Fonts.avenirNextLtProRegular(Constants.STD_FONT_SIZE)));
         HBox continentBox = new HBox(5, continentText, continentsComboBox);
         continentBox.setAlignment(Pos.BASELINE_LEFT);
@@ -188,8 +188,6 @@ public class Main extends Application {
             @Override public String getName() { return "proposalsVisible"; }
         };
 
-        this.proposals.setAll(Helper.loadProposals());
-
         registerListeners();
     }
 
@@ -215,7 +213,7 @@ public class Main extends Application {
         this.stage = stage;
         initOnFXApplicationThread();
 
-        Scene scene = new Scene(pane, 500, 570);
+        Scene scene = new Scene(pane, 560, 570);
         scene.getStylesheets().add(Main.class.getResource("conficheck4j.css").toExternalForm());
         stage.setScene(scene);
         stage.setTitle("ConfiCheck " + Main.VERSION);
@@ -224,7 +222,6 @@ public class Main extends Application {
         stage.show();
         stage.centerOnScreen();
 
-        fetchConferences();
         calendarView.setToInitialPosition();
         updateView();
     }
@@ -244,8 +241,8 @@ public class Main extends Application {
                 final ZonedDateTime date  = ZonedDateTime.ofInstant(conference.getDate(), ZoneId.systemDefault());
                 final Integer       month = date.get(ChronoField.MONTH_OF_YEAR);
                 if (!this.model.conferencesPerMonth.containsKey(month)) {
-                    this.model.conferencesPerMonth.put(month, new TreeSet<>());
-                    this.model.conferencesPerContinent.put(month, new TreeSet<>());
+                    this.model.conferencesPerMonth.put(month, new ArrayList<>());
+                    this.model.conferencesPerContinent.put(month, new ArrayList<>());
                 }
                 this.model.conferencesPerMonth.get(month).add(conference);
                 this.model.conferencesPerContinent.get(month).add(conference);
@@ -257,32 +254,30 @@ public class Main extends Application {
                 }
                 case SPEAKING  -> {
                     this.model.filteredConferences.clear();
-                    conferencesInContinent.forEach(conference -> {
+                    conferencesInContinent.stream()
+                                          .filter(conference -> conference.getAttendence() == AttendingStatus.SPEAKING)
+                                          .forEach(conference -> {
                         final ZonedDateTime date  = ZonedDateTime.ofInstant(conference.getDate(), ZoneId.systemDefault());
                         final Integer       month = date.get(ChronoField.MONTH_OF_YEAR);
-                        if (this.model.attendence.containsKey(conference.getId())) {
-                            if (this.model.attendence.get(conference.getId()) != AttendingStatus.SPEAKING.id) { return; }
-                            if (!this.model.filteredConferences.containsKey(month)) { this.model.filteredConferences.put(month, new TreeSet<>()); }
-                            this.model.filteredConferences.get(month).add(conference);
-                        }
+                        if (!this.model.filteredConferences.containsKey(month)) { this.model.filteredConferences.put(month, new ArrayList<>()); }
+                        this.model.filteredConferences.get(month).add(conference);
                     });
                 }
                 case ATTENDING -> {
                     this.model.filteredConferences.clear();
-                    conferencesInContinent.forEach(conference -> {
+                    conferencesInContinent.stream()
+                                          .filter(conference -> conference.getAttendence() == AttendingStatus.ATTENDING)
+                                          .forEach(conference -> {
                         final ZonedDateTime date  = ZonedDateTime.ofInstant(conference.getDate(), ZoneId.systemDefault());
                         final Integer       month = date.get(ChronoField.MONTH_OF_YEAR);
-                        if (this.model.attendence.containsKey(conference.getId())) {
-                            if (this.model.attendence.get(conference.getId()) != AttendingStatus.ATTENDING.id) { return; }
-                            if (!this.model.filteredConferences.containsKey(month)) { this.model.filteredConferences.put(month, new TreeSet<>()); }
-                            this.model.filteredConferences.get(month).add(conference);
-                        }
+                        if (!this.model.filteredConferences.containsKey(month)) { this.model.filteredConferences.put(month, new ArrayList<>()); }
+                        this.model.filteredConferences.get(month).add(conference);
                     });
                 }
                 case CFP_OPEN  -> {
                     for (Integer month : this.model.conferencesPerContinent.keySet()) {
                         if (this.model.conferencesPerContinent.get(month).isEmpty()) { continue; }
-                        this.model.filteredConferences.put(month, new TreeSet<>(this.model.conferencesPerContinent.get(month)
+                        this.model.filteredConferences.put(month, new ArrayList<>(this.model.conferencesPerContinent.get(month)
                                                                                                                   .stream()
                                                                                                                   .filter(conference -> conference.getCfpDate().isPresent())
                                                                                                                   .filter(conference -> Helper.getDatesFromJavaConferenceDate(conference.getCfpDate().get()).length > 0 && Helper.getDatesFromJavaConferenceDate(conference.getCfpDate().get())[0].isPresent())
@@ -295,11 +290,11 @@ public class Main extends Application {
             final int currentMonth = LocalDate.now().getMonthValue();
             List<TitledPane> filtered  = new ArrayList<>();
             this.model.filteredConferences.entrySet().forEach(entry -> {
-                final Integer                 month              = entry.getKey();
-                final TreeSet<ConferenceItem> conferencesInMonth = entry.getValue();
+                final Integer              month              = entry.getKey();
+                final List<ConferenceItem> conferencesInMonth = entry.getValue();
                 VBox monthBox = new VBox();
-                conferencesInMonth.forEach(conference -> monthBox.getChildren().add(new ConferenceView(Main.this, this.model, conference)));
-                TitledPane monthPane = new TitledPane(Constants.MONTHS[month - 1], monthBox);
+                conferencesInMonth.forEach(conference -> monthBox.getChildren().add(new ConferenceView(Main.this, this.model, conference, this.model.allProposals)));
+                TitledPane monthPane = new TitledPane(Constants.MONTHS[month - 1] + " (" + conferencesInMonth.size() + ")", monthBox);
                 monthPane.setCollapsible(true);
                 switch (this.selectedFilter.get()) {
                     case ALL                            -> monthPane.setExpanded(month == currentMonth);
@@ -309,17 +304,6 @@ public class Main extends Application {
             });
             conferencesVBox.getChildren().setAll(filtered);
         });
-    }
-
-    private void fetchConferences() {
-        try {
-            //String               jsonText        = Helper.readTextFile("/Users/hansolo/Desktop/javaconferences.json", Charset.defaultCharset());
-            //String               jsonText        = Helper.getTextFromUrl(Constants.JAVA_CONFERENCES_JSON_URL);
-            //List<JavaConference> conferences     = Helper.parseJavaConferencesJson(jsonText);
-            //this.model.update(conferences);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
     private void openSpeakerInfo() {
@@ -555,7 +539,7 @@ public class Main extends Application {
     }
 
     private void openProposals() {
-        Stage       proposalsStage = new Stage();
+        Stage proposalsStage = new Stage();
         proposalsStage.setTitle("Proposals");
 
         // Copied Feedback pane
@@ -581,11 +565,11 @@ public class Main extends Application {
         copiedFeedbackPane.setOpacity(0.0);
 
         // Proposals
-        if (this.proposals.isEmpty()) { this.proposals.add(new ProposalItem("", "", "")); }
+        if (this.model.allProposals.isEmpty()) { this.model.allProposals.add(new ProposalItem("", "", "")); }
 
         VBox  proposalsVBox = new VBox();
-        this.proposals.forEach(proposal -> {
-            ProposalView proposalView = new ProposalView(Main.this, copiedFeedbackPane, proposal, clipboard, clipboardContent);
+        this.model.allProposals.forEach(proposal -> {
+            ProposalView proposalView = new ProposalView(Main.this, copiedFeedbackPane, proposal, this.model.allProposals, clipboard, clipboardContent);
             proposalsVBox.getChildren().add(proposalView);
         });
         ScrollPane scrollPane = new ScrollPane(proposalsVBox);
@@ -593,17 +577,17 @@ public class Main extends Application {
 
         Button addButton = Factory.createButton("Add", "Add new proposals", Constants.STD_FONT_SIZE);
         addButton.setOnAction(e -> {
-            this.proposals.add(new ProposalItem("", "", ""));
+            this.model.allProposals.add(new ProposalItem("", "", ""));
             proposalsVBox.getChildren().clear();
-            this.proposals.forEach(proposal -> {
-                ProposalView proposalView = new ProposalView(Main.this, copiedFeedbackPane, proposal, clipboard, clipboardContent);
+            this.model.allProposals.forEach(proposal -> {
+                ProposalView proposalView = new ProposalView(Main.this, copiedFeedbackPane, proposal, this.model.allProposals, clipboard, clipboardContent);
                 proposalsVBox.getChildren().add(proposalView);
             });
         });
 
         Button closeButton = Factory.createButton("Close", "Close proposals dialog", Constants.STD_FONT_SIZE);
         closeButton.setOnAction(e -> {
-            Helper.saveProposalItems(this.proposals);
+            Helper.saveProposalItems(this.model.allProposals);
             proposalsStage.close();
             proposalsVisible.set(false);
         });

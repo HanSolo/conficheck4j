@@ -3,13 +3,17 @@ package eu.hansolo.fx.conficheck4j.views;
 import eu.hansolo.fx.conficheck4j.Main;
 import eu.hansolo.fx.conficheck4j.data.ConferenceItem;
 import eu.hansolo.fx.conficheck4j.data.ConfiModel;
+import eu.hansolo.fx.conficheck4j.data.ProposalItem;
 import eu.hansolo.fx.conficheck4j.flag.Flag;
 import eu.hansolo.fx.conficheck4j.fonts.Fonts;
 import eu.hansolo.fx.conficheck4j.tools.Constants;
+import eu.hansolo.fx.conficheck4j.tools.Constants.AttendingStatus;
+import eu.hansolo.fx.conficheck4j.tools.Constants.ProposalStatus;
 import eu.hansolo.fx.conficheck4j.tools.Factory;
 import eu.hansolo.fx.conficheck4j.tools.Helper;
 import eu.hansolo.fx.conficheck4j.tools.IsoCountryCodes;
 import eu.hansolo.fx.conficheck4j.tools.IsoCountryInfo;
+import javafx.application.Platform;
 import javafx.beans.DefaultProperty;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.BooleanPropertyBase;
@@ -28,8 +32,13 @@ import javafx.geometry.Insets;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.Separator;
+import javafx.scene.control.Tooltip;
 import javafx.scene.effect.BlendMode;
 import javafx.scene.effect.ColorAdjust;
 import javafx.scene.image.Image;
@@ -51,6 +60,8 @@ import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
+import javafx.scene.text.TextAlignment;
+import javafx.util.StringConverter;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -58,6 +69,8 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -70,7 +83,7 @@ import java.util.UUID;
 @DefaultProperty("children")
 public class ConferenceView extends Region {
     public  static final double                         PREFERRED_WIDTH  = 540;
-    public  static final double                         PREFERRED_HEIGHT = 150;
+    public  static final double                         PREFERRED_HEIGHT = 180;
     public  static final double                         MINIMUM_WIDTH    = 400;
     public  static final double                         MINIMUM_HEIGHT   = 50;
     public  static final double                         MAXIMUM_WIDTH    = 1024;
@@ -78,13 +91,13 @@ public class ConferenceView extends Region {
     private              Main                           main;
     private              ConfiModel                     model;
     private              ObjectProperty<ConferenceItem> conference;
+    private              List<ProposalItem>             proposals;
     private              IntegerProperty                selectedAttendenceIndex;
     private              BooleanProperty                proposalSelectionVisible;
     private              BooleanProperty                showAlert;
     private              StringProperty                 alertTitle;
     private              StringProperty                 alertMessage;
     private              Background                     hoverBackground;
-    private              BooleanProperty                online;
     private              double                         size;
     private              String                         id;
     private              DateTimeFormatter              formatter;
@@ -97,7 +110,7 @@ public class ConferenceView extends Region {
 
 
     // ******************** Constructors **************************************
-    public ConferenceView(final Main main, final ConfiModel model, final ConferenceItem conference) {
+    public ConferenceView(final Main main, final ConfiModel model, final ConferenceItem conference, final List<ProposalItem> proposals) {
         this.main                     = main;
         this.model                    = model;
         this.conference               = new ObjectPropertyBase<>(conference) {
@@ -105,6 +118,7 @@ public class ConferenceView extends Region {
             @Override public Object getBean()      { return ConferenceView.this; }
             @Override public String getName()      { return "conference"; }
         };
+        this.proposals                = proposals;
         this.selectedAttendenceIndex  = new SimpleIntegerProperty(0);
         this.proposalSelectionVisible = new SimpleBooleanProperty(false);
         this.showAlert                = new SimpleBooleanProperty(false);
@@ -116,7 +130,6 @@ public class ConferenceView extends Region {
         this.isoInfo                  = IsoCountryCodes.searchByName(this.conference.get().getCountry()).orElse(null);
         this.flag                     = null == this.isoInfo ? Flag.NOT_FOUND : this.isoInfo.getFlag();
         this.hoverBackground          = new Background(new BackgroundFill(Color.color(0.9, 0.9, 0.9), CornerRadii.EMPTY, Insets.EMPTY));
-        this.online                   = new SimpleBooleanProperty(false);
         initGraphics();
         registerListeners();
     }
@@ -149,6 +162,7 @@ public class ConferenceView extends Region {
         flagImage.setFitHeight(20);
 
         HBox conferenceNameHBox = new HBox(conferenceName, Factory.createSpacer(Orientation.HORIZONTAL), flagImage);
+        conferenceNameHBox.setAlignment(Pos.CENTER);
 
         // Conference Date
         Text daysText;
@@ -171,23 +185,27 @@ public class ConferenceView extends Region {
         countryText.setFill(Helper.getSecondaryColor());
 
         HBox conferenceDateHBox = new HBox(daysText, Factory.createSpacer(Orientation.HORIZONTAL), cityText, countryText);
+        conferenceDateHBox.setAlignment(Pos.CENTER);
 
         // Link to website
         HBox urlAndMapHBox = new HBox(5);
         urlAndMapHBox.setAlignment(Pos.CENTER);
         if (!this.conference.get().getUrl().isEmpty()) {
-            Text webText = new Text("WEB");
+            Label webText = new Label("WEB");
+            webText.setMinWidth(28);
             webText.setFont(Fonts.avenirNextLtProRegular(12));
 
             Region urlIcon = new Region();
             urlIcon.getStyleClass().add("url-icon");
             urlIcon.setFocusTraversable(false);
+            urlIcon.setMinSize(16, 16);
+            urlIcon.setMaxSize(16, 16);
             urlIcon.setPrefSize(16, 16);
 
             Button urlButton = Factory.createButton("", "Open conference website in default browser", 12);
             urlButton.setGraphic(urlIcon);
             urlButton.setOnAction(e -> openUrlInExternalBrowser(this.conference.get().getUrl()));
-            urlButton.setDisable(!this.online.get());
+            urlButton.disableProperty().bind(this.model.networkMonitor.offlineProperty());
 
             urlAndMapHBox.getChildren().addAll(webText, urlButton);
         }
@@ -196,12 +214,14 @@ public class ConferenceView extends Region {
             Region mapIcon = new Region();
             mapIcon.getStyleClass().add("map-icon");
             mapIcon.setFocusTraversable(false);
+            mapIcon.setMinSize(16, 16);
+            mapIcon.setMaxSize(16, 16);
             mapIcon.setPrefSize(16, 16);
 
             Button mapButton = Factory.createButton("", "Open conference location in google maps in default browser", 12);
             mapButton.setGraphic(mapIcon);
             mapButton.setOnAction(e -> openUrlInExternalBrowser("https://www.google.com/maps/search/?api=1&query=" + conference.get().getLat().get() + "," + conference.get().getLon().get()));
-            mapButton.setDisable(!this.online.get());
+            mapButton.disableProperty().bind(this.model.networkMonitor.offlineProperty());
 
             urlAndMapHBox.getChildren().add(mapButton);
         }
@@ -210,23 +230,26 @@ public class ConferenceView extends Region {
         HBox cfpAndAttendenceHBox = new HBox(5);
         cfpAndAttendenceHBox.setAlignment(Pos.CENTER);
         if (this.conference.get().getCfpUrl().isPresent()) {
-            Text cfpText = new Text("CFP");
+            Label cfpText = new Label("CFP");
+            cfpText.setMinWidth(28);
             cfpText.setFont(Fonts.avenirNextLtProRegular(12));
 
             Region urlIcon = new Region();
             urlIcon.getStyleClass().add("url-icon");
             urlIcon.setFocusTraversable(false);
+            urlIcon.setMinSize(16, 16);
+            urlIcon.setMaxSize(16, 16);
             urlIcon.setPrefSize(16, 16);
 
             Button cfpUrlButton = Factory.createButton("", "Open conference cfp website in default browser", 12);
             cfpUrlButton.setGraphic(urlIcon);
             cfpUrlButton.setOnAction(e -> openUrlInExternalBrowser(this.conference.get().getCfpUrl().get()));
-            cfpUrlButton.setDisable(!this.online.get());
+            cfpUrlButton.disableProperty().bind(this.model.networkMonitor.offlineProperty());
 
             cfpAndAttendenceHBox.getChildren().addAll(cfpText, cfpUrlButton);
 
             if (this.conference.get().getCfpDate().isPresent()) {
-                Optional<Instant>[] optCfpDate   = Helper.getDatesFromJavaConferenceDate(this.conference.get().getCfpDate().get());
+                Optional<Instant>[] optCfpDate = Helper.getDatesFromJavaConferenceDate(this.conference.get().getCfpDate().get());
                 if (optCfpDate.length > 0 && optCfpDate[0].isPresent()) {
                     ZonedDateTime endDate      = ZonedDateTime.ofInstant(optCfpDate[0].get(), ZoneId.systemDefault());
                     Label         cfpDateLabel = new Label(df.format(endDate));
@@ -238,10 +261,101 @@ public class ConferenceView extends Region {
                 }
             }
         }
-        cfpAndAttendenceHBox.getChildren().add(Factory.createSpacer(Orientation.HORIZONTAL));
+
+        ComboBox<Constants.AttendingStatus> attendenceComboBox = new ComboBox<>();
+        attendenceComboBox.getItems().addAll(Constants.AttendingStatus.values());
+        attendenceComboBox.getSelectionModel().select(this.conference.get().getAttendence());
+        attendenceComboBox.setCellFactory(_ -> new ListCell<>() {
+            @Override protected void updateItem(Constants.AttendingStatus attendence, boolean empty) {
+                super.updateItem(attendence, empty);
+                if (empty) {
+                    setText(null);
+                    setGraphic(null);
+                } else {
+                    setText(attendence.uiString);
+                    setFont(Fonts.avenirNextLtProRegular(12));
+                }
+            }
+        });
+        attendenceComboBox.setConverter(new StringConverter<>() {
+            @Override public String toString(final Constants.AttendingStatus attendence) { return null == attendence ? "" : attendence.uiString; }
+            @Override public Constants.AttendingStatus fromString(final String s) { return AttendingStatus.fromText(s); }
+        });
+        attendenceComboBox.getEditor().setFont(Fonts.avenirNextLtProRegular(12));
+        attendenceComboBox.getSelectionModel().selectedItemProperty().addListener((o, ov, nv) -> this.conference.get().setAttendence(nv));
+        cfpAndAttendenceHBox.getChildren().addAll(Factory.createSpacer(Orientation.HORIZONTAL), attendenceComboBox);
         cfpAndAttendenceHBox.setAlignment(Pos.CENTER);
 
-        vBox = new VBox(10, conferenceNameHBox, conferenceDateHBox, urlAndMapHBox, cfpAndAttendenceHBox);
+        // Proposals
+        Text proposalsText = new Text("Proposals");
+        proposalsText.setFont(Fonts.avenirNextLtProMedium(12));
+
+        Region plusIcon = new Region();
+        plusIcon.getStyleClass().add("plus-icon");
+        plusIcon.setFocusTraversable(false);
+        plusIcon.setPrefSize(16, 16);
+        plusIcon.setMinSize(16, 16);
+        plusIcon.setMaxSize(16, 16);
+        Tooltip.install(plusIcon, new Tooltip("Add proposal to conference"));
+
+        Label addProposalLabel = new Label("", plusIcon);
+        addProposalLabel.setGraphicTextGap(0);
+        ContextMenu contextMenu = new ContextMenu();
+        contextMenu.setOnAction(e -> {
+            final String selectedProposal = ((MenuItem) e.getTarget()).getText();
+            this.proposals.stream()
+                          .filter(proposal -> proposal.getTitle().equals(selectedProposal))
+                          .findFirst()
+                          .ifPresent(proposal -> this.conference.get().getProposals().put(proposal, ProposalStatus.NOT_SUBMITTED));
+        });
+        this.proposals.forEach(proposal -> {
+            MenuItem menuItem = new MenuItem(proposal.getTitle());
+            contextMenu.getItems().add(menuItem);
+        });
+        addProposalLabel.setContextMenu(contextMenu);
+
+        HBox proposalsBox = new HBox(proposalsText, Factory.createSpacer(Orientation.HORIZONTAL), addProposalLabel);
+        proposalsBox.setAlignment(Pos.CENTER);
+
+        List<HBox> proposed = new ArrayList<>();
+        this.conference.get().getProposals().entrySet().forEach(entry -> {
+            Text proposalText = new Text(entry.getKey().getTitle());
+            proposalText.setTextAlignment(TextAlignment.LEFT);
+            proposalText.setWrappingWidth(300);
+            proposalText.setFont(Fonts.avenirNextLtProRegular(12));
+
+            ComboBox<ProposalStatus> proposalStatusComboBox = new ComboBox<>();
+            proposalStatusComboBox.getItems().addAll(ProposalStatus.values());
+            proposalStatusComboBox.getSelectionModel().select(entry.getValue());
+            proposalStatusComboBox.getEditor().setFont(Fonts.avenirNextLtProRegular(12));
+            proposalStatusComboBox.setCellFactory(_ -> new ListCell<>() {
+                @Override protected void updateItem(ProposalStatus status, boolean empty) {
+                    super.updateItem(status, empty);
+                    if (empty) {
+                        setText(null);
+                        setGraphic(null);
+                    } else {
+                        setText(status.uiString);
+                        setFont(Fonts.avenirNextLtProRegular(12));
+                    }
+                }
+            });
+            proposalStatusComboBox.setConverter(new StringConverter<>() {
+                @Override public String toString(final ProposalStatus status) { return null == status ? "" : status.uiString; }
+                @Override public ProposalStatus fromString(final String s) { return ProposalStatus.fromText(s); }
+            });
+            proposalStatusComboBox.getSelectionModel().selectedItemProperty().addListener((o, ov, nv) -> this.conference.get().getProposals().put(entry.getKey(), nv));
+            HBox proposalStateBox = new HBox(proposalText, Factory.createSpacer(Orientation.HORIZONTAL), proposalStatusComboBox);
+            proposalStateBox.setAlignment(Pos.CENTER);
+            proposed.add(proposalStateBox);
+            setPrefHeight(PREFERRED_HEIGHT + proposed.size() * 20);
+        });
+
+        VBox proposedSessions = new VBox(5);
+        proposedSessions.setPadding(new Insets(5, 0, 5, 0));
+        proposedSessions.getChildren().setAll(proposed);
+
+        vBox = new VBox(10, conferenceNameHBox, conferenceDateHBox, urlAndMapHBox, cfpAndAttendenceHBox, proposalsBox, proposedSessions, new Separator(Orientation.HORIZONTAL));
         vBox.setFillWidth(true);
 
         getChildren().setAll(vBox);
@@ -253,7 +367,6 @@ public class ConferenceView extends Region {
         heightProperty().addListener(o -> resize());
         addEventFilter(MouseEvent.MOUSE_ENTERED, e -> setBackground(hoverBackground));
         addEventFilter(MouseEvent.MOUSE_EXITED, e -> setBackground(Background.EMPTY));
-        this.model.networkMonitor.onlineProperty().addListener((o, ov, nv) -> this.online.set(nv));
     }
 
 
@@ -264,8 +377,6 @@ public class ConferenceView extends Region {
     @Override protected double computePrefHeight(final double width) { return super.computePrefHeight(width); }
     @Override protected double computeMaxWidth(final double height)  { return MAXIMUM_WIDTH; }
     @Override protected double computeMaxHeight(final double width)  { return MAXIMUM_HEIGHT; }
-
-    @Override public ObservableList<Node> getChildren()              { return super.getChildren(); }
 
     private void openUrlInExternalBrowser(final String url) {
         if (this.model.networkMonitor.isOnline()) {
@@ -285,9 +396,6 @@ public class ConferenceView extends Region {
         size   = width < height ? width : height;
 
         if (width > 0 && height > 0) {
-            // Use for rectangular controls width != height
-            //vBox.setMinSize(width, height);
-            vBox.setMaxSize(width, height);
             vBox.setPrefSize(width, height);
             vBox.relocate((getWidth() - width) * 0.5, (getHeight() - height) * 0.5);
         }

@@ -5,6 +5,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import eu.hansolo.fx.conficheck4j.data.ConferenceItem;
+import eu.hansolo.fx.conficheck4j.data.ConfiModel;
 import eu.hansolo.fx.conficheck4j.data.JavaConference;
 import eu.hansolo.fx.conficheck4j.data.ProposalItem;
 import eu.hansolo.fx.conficheck4j.data.SpeakerItem;
@@ -55,6 +56,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.StringTokenizer;
 import java.util.concurrent.CompletionException;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -96,28 +98,28 @@ public class Helper {
         return conferences;
     }
 
-    public static final List<ConferenceItem> parseConferenceItemsJson(final String jsonText) {
+    public static final List<ConferenceItem> parseConferenceItemsJson(final String jsonText, final ConfiModel model) {
         final List<ConferenceItem> conferences          = new ArrayList<>();
         if (null == jsonText || jsonText.isEmpty()) { return conferences; }
         final Gson      gson                = new Gson();
         final JsonArray conferenceItemArray = gson.fromJson(jsonText, JsonElement.class).getAsJsonArray();
         conferenceItemArray.forEach(jsonElement -> {
             final JsonObject     jsonObject = jsonElement.getAsJsonObject();
-            final ConferenceItem conference = ConferenceItem.fromJsonObject(jsonObject);
+            final ConferenceItem conference = ConferenceItem.fromJsonObject(jsonObject, model);
             if (null != conference) { conferences.add(conference); }
         });
         return conferences;
     }
 
     public static final List<ProposalItem> parseProposalItemsJson(final String jsonText) {
-        final List<ProposalItem> proposals          = new ArrayList<>();
+        final List<ProposalItem> proposals = new ArrayList<>();
         if (null == jsonText || jsonText.isEmpty()) { return proposals; }
-        final Gson      gson                = new Gson();
+        final Gson      gson              = new Gson();
         final JsonArray proposalItemArray = gson.fromJson(jsonText, JsonElement.class).getAsJsonArray();
         proposalItemArray.forEach(jsonElement -> {
-            final JsonObject     jsonObject = jsonElement.getAsJsonObject();
-            final ProposalItem conference = ProposalItem.fromJsonObject(jsonObject);
-            if (null != conference) { proposals.add(conference); }
+            final JsonObject   jsonObject = jsonElement.getAsJsonObject();
+            final ProposalItem proposal   = ProposalItem.fromJsonObject(jsonObject);
+            if (null != proposal) { proposals.add(proposal); }
         });
         return proposals;
     }
@@ -286,6 +288,11 @@ public class Helper {
         final ZonedDateTime startOfDayUTC = now.atStartOfDay(ZoneOffset.UTC);
         final ZonedDateTime endOfCfpUTC   = date.atStartOfDay(ZoneOffset.UTC);
         return startOfDayUTC.toEpochSecond() <= endOfCfpUTC.toEpochSecond();
+    }
+
+    public static int countWords(final String text) {
+        StringTokenizer st = new StringTokenizer(text);
+        return st.countTokens();
     }
 
     public static final boolean isDarkMode() {

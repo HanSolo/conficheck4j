@@ -153,6 +153,16 @@ public final class Constants {
             }
         }
 
+        public static final ProposalStatus fromId(final int id) {
+            switch(id) {
+                case 0  -> { return NOT_SUBMITTED; }
+                case 1  -> { return SUBMITTED; }
+                case 2  -> { return ACCEPTED; }
+                case 3  -> { return REJECTED; }
+                default -> { return NOT_SUBMITTED; }
+            }
+        }
+
         public static final int getIndexFromText(final String text) {
             switch(text) {
                 case "not_submitted" -> { return NOT_SUBMITTED.id; }

@@ -5,7 +5,6 @@ import eu.hansolo.fx.conficheck4j.data.ConferenceItem;
 import eu.hansolo.fx.conficheck4j.data.ConfiModel;
 import eu.hansolo.fx.conficheck4j.fonts.Fonts;
 import eu.hansolo.fx.conficheck4j.tools.Constants;
-import eu.hansolo.fx.conficheck4j.tools.Helper;
 import javafx.beans.DefaultProperty;
 import javafx.collections.ObservableList;
 import javafx.geometry.VPos;
@@ -28,7 +27,6 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoField;
 import java.util.List;
-import java.util.SortedSet;
 import java.util.TreeSet;
 
 
@@ -143,7 +141,7 @@ public class CalendarView extends Region {
         final long   minDate             = LocalDate.now().atStartOfDay().toEpochSecond(ZoneId.systemDefault().getRules().getOffset(LocalDateTime.now())) - (Constants.SECONDS_PER_WEEK * 4);
         final double fourWeeks           = 28 * tickStepX;
         int maxNoOfConferencesPerMonth = 0;
-        for (final TreeSet<ConferenceItem> conferences : this.model.conferencesPerMonth.values()) {
+        for (final List<ConferenceItem> conferences : this.model.conferencesPerMonth.values()) {
             maxNoOfConferencesPerMonth = Math.max(conferences.size(), maxNoOfConferencesPerMonth);
         }
 
@@ -188,14 +186,11 @@ public class CalendarView extends Region {
                 final double length    = tickStepX * conference.getDays();
                 //System.out.println(startDate + " >= " + startDate + " && " + (startOfDay + Constants.SECONDS_PER_DAY) + " <= " + (startOfDay + Constants.SECONDS_PER_DAY));
                 if (startDate >= startOfDay && startDate + Constants.SECONDS_PER_DAY <= startOfDay + Constants.SECONDS_PER_DAY) {
-                    Color fillColor = Constants.PURPLE;
-                    if (this.model.attendence.keySet().contains(conference.getId())) {
-                        final int index = this.model.attendence.get(conference.getId());
-                        switch (index) {
-                            case  1 -> fillColor = Constants.ORANGE;
-                            case  2 -> fillColor = Constants.GREEN;
-                            default -> fillColor = Constants.PURPLE;
-                        }
+                    Color fillColor;
+                    switch (conference.getAttendence()) {
+                        case  ATTENDING -> fillColor = Constants.ORANGE;
+                        case  SPEAKING  -> fillColor = Constants.GREEN;
+                        default         -> fillColor = Constants.PURPLE;
                     }
                     final double y = topY + confCount * scaleY;
                     ctx.setFill(fillColor);

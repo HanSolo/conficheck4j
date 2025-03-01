@@ -5,6 +5,7 @@ import eu.hansolo.fx.conficheck4j.data.ProposalItem;
 import eu.hansolo.fx.conficheck4j.fonts.Fonts;
 import eu.hansolo.fx.conficheck4j.tools.Constants;
 import eu.hansolo.fx.conficheck4j.tools.Factory;
+import eu.hansolo.fx.conficheck4j.tools.Helper;
 import javafx.beans.DefaultProperty;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -21,38 +22,42 @@ import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Text;
 
 import static eu.hansolo.toolbox.Constants.NEW_LINE;
 
 
 @DefaultProperty("children")
 public class ProposalView extends Region {
-    public static final double           PREFERRED_WIDTH  = 360;
-    public static final double           PREFERRED_HEIGHT = 400;
-    public static final double           MINIMUM_WIDTH    = 360;
-    public static final double           MINIMUM_HEIGHT   = 50;
-    public static final double           MAXIMUM_WIDTH    = 1024;
-    public static final double           MAXIMUM_HEIGHT   = 400;
-    private             Main             main;
-    private             StackPane        copiedFeedbackPane;
-    private             ProposalItem     proposal;
-    private             double           width;
-    private             double           height;
-    private             VBox             vBox;
-    private             Clipboard        clipboard;
-    private             ClipboardContent clipboardContent;
+    public static final double                       PREFERRED_WIDTH  = 360;
+    public static final double                       PREFERRED_HEIGHT = 400;
+    public static final double                       MINIMUM_WIDTH    = 360;
+    public static final double                       MINIMUM_HEIGHT   = 50;
+    public static final double                       MAXIMUM_WIDTH    = 1024;
+    public static final double                       MAXIMUM_HEIGHT   = 400;
+    private             Main                         main;
+    private             StackPane                    copiedFeedbackPane;
+    private             ProposalItem                 proposal;
+    private             ObservableList<ProposalItem> proposals;
+    private             double                       width;
+    private             double                       height;
+    private             VBox                         vBox;
+    private             Clipboard                    clipboard;
+    private             ClipboardContent             clipboardContent;
 
 
 
     // ******************** Constructors **************************************
-    public ProposalView(final Main main, final StackPane copiedFeedbackPane, final ProposalItem proposal, final Clipboard clipboard, final ClipboardContent clipboardContent) {
+    public ProposalView(final Main main, final StackPane copiedFeedbackPane, final ProposalItem proposal, final ObservableList<ProposalItem> proposals, final Clipboard clipboard, final ClipboardContent clipboardContent) {
         this.main               = main;
         this.copiedFeedbackPane = copiedFeedbackPane;
         this.proposal           = null == proposal ? new ProposalItem("", "", "") : proposal;
+        this.proposals          = proposals;
         this.clipboard          = clipboard;
         this.clipboardContent   = clipboardContent;
 
@@ -75,33 +80,45 @@ public class ProposalView extends Region {
         // Proposal
         Label     proposalTitleLabel     = Factory.createLabel("Title", Constants.GRAY, Fonts.avenirNextLtProDemi(Constants.STD_FONT_SIZE), Pos.CENTER_LEFT);
         TextField proposalTitleTextField = Factory.createTextField("Title", "Title of session proposal", Constants.STD_FONT_SIZE);
-        VBox      proposalTitleBox       = new VBox(proposalTitleLabel, proposalTitleTextField);
+        Text      noOfWordsInTitleText   = new Text("(" + proposal.getTitle().length() + " characters, " + Helper.countWords(proposal.getTitle()) + " words)");
+        noOfWordsInTitleText.setFont(Fonts.avenirNextLtProRegular(10));
+        VBox      proposalTitleBox       = new VBox(2, proposalTitleLabel, proposalTitleTextField, noOfWordsInTitleText);
+        proposalTitleBox.setAlignment(Pos.CENTER_LEFT);
         proposalTitleTextField.setText(proposal.getTitle());
         proposalTitleTextField.focusedProperty().addListener((o, ov, nv) -> {
             if (!nv) {
                 this.proposal.setTitle(proposalTitleTextField.getText());
+                noOfWordsInTitleText.setText("(" + proposalTitleTextField.getText().length() + " characters, " + Helper.countWords(proposalTitleTextField.getText()) + " words)");
             }
         });
 
         Label    proposalAbstractLabel    = Factory.createLabel("Abstract", Constants.GRAY, Fonts.avenirNextLtProDemi(Constants.STD_FONT_SIZE), Pos.CENTER_LEFT);
         TextArea proposalAbstractTextArea = Factory.createRegularTextArea("Abstract of session proposal", Constants.BLACK, Constants.STD_FONT_SIZE);
-        VBox     proposalAbstractBox      = new VBox(proposalAbstractLabel, proposalAbstractTextArea);
+        Text     noOfWordsInAbstractText  = new Text("(" + proposal.getAbstract().length() + " characters, " + Helper.countWords(proposal.getAbstract()) + " words)");
+        noOfWordsInAbstractText.setFont(Fonts.avenirNextLtProRegular(10));
+        VBox     proposalAbstractBox      = new VBox(2, proposalAbstractLabel, proposalAbstractTextArea, noOfWordsInAbstractText);
+        proposalAbstractBox.setAlignment(Pos.CENTER_LEFT);
         proposalAbstractTextArea.setPrefRowCount(8);
         proposalAbstractTextArea.setText(proposal.getAbstract());
         proposalAbstractTextArea.focusedProperty().addListener((o, ov, nv) -> {
             if (!nv) {
-                this.proposal.setAbstract(proposalAbstractTextArea.getText().replaceAll("\\s{2,}", " "));
+                this.proposal.setAbstract(proposalAbstractTextArea.getText().replaceAll("\\n", " "));
+                noOfWordsInAbstractText.setText("(" + proposalAbstractTextArea.getText().length() + " characters, " + Helper.countWords(proposalAbstractTextArea.getText()) + " words)");
             }
         });
 
         Label    proposalPitchLabel    = Factory.createLabel("Pitch", Constants.GRAY, Fonts.avenirNextLtProDemi(Constants.STD_FONT_SIZE), Pos.CENTER_LEFT);
         TextArea proposalPitchTextArea = Factory.createRegularTextArea("Pitch of session proposal", Constants.BLACK, Constants.STD_FONT_SIZE);
-        VBox     proposalPitchBox      = new VBox(proposalPitchLabel, proposalPitchTextArea);
+        Text     noOfWordsInPitchText  = new Text("(" + proposal.getPitch().length() + " characters, " + Helper.countWords(proposal.getPitch()) + " words)");
+        noOfWordsInPitchText.setFont(Fonts.avenirNextLtProRegular(10));
+        VBox     proposalPitchBox      = new VBox(2, proposalPitchLabel, proposalPitchTextArea, noOfWordsInPitchText);
+        proposalPitchBox.setAlignment(Pos.CENTER_LEFT);
         proposalPitchTextArea.setPrefRowCount(8);
         proposalPitchTextArea.setText(proposal.getPitch());
         proposalPitchTextArea.focusedProperty().addListener((o, ov, nv) -> {
             if (!nv) {
-                this.proposal.setPitch(proposalPitchTextArea.getText().replaceAll("\\s{2,}", " "));
+                this.proposal.setPitch(proposalPitchTextArea.getText().replaceAll("\\n", " "));
+                noOfWordsInPitchText.setText("(" + proposalPitchTextArea.getText().length() + " characters, " + Helper.countWords(proposalPitchTextArea.getText()) + " words)");
             }
         });
 
@@ -154,7 +171,20 @@ public class ProposalView extends Region {
         Tooltip.install(proposalHeaderBox, new Tooltip("Copy proposal to clipboard"));
         //VBox.setMargin(proposalHeaderBox, new Insets(0, 0, -10, 0));
 
-        vBox = new VBox(10, proposalHeaderBox, proposalTitleBox, proposalAbstractBox, proposalPitchBox);
+        // Delete proposal
+        Region trashIcon = new Region();
+        trashIcon.getStyleClass().add("trash-icon");
+        trashIcon.setFocusTraversable(false);
+        trashIcon.setPrefSize(20, 20);
+        trashIcon.setMinSize(20, 20);
+        trashIcon.setMaxSize(20, 20);
+        trashIcon.setOnMousePressed(e -> this.proposals.remove(this.proposal));
+        Tooltip.install(trashIcon, new Tooltip("Remove proposal"));
+
+        HBox headerBox = new HBox(5, proposalHeaderBox, trashIcon);
+        headerBox.setAlignment(Pos.CENTER);
+        HBox.setHgrow(proposalHeaderBox, Priority.ALWAYS);
+        vBox = new VBox(10, headerBox, proposalTitleBox, proposalAbstractBox, proposalPitchBox);
         vBox.setFillWidth(true);
 
         getChildren().setAll(vBox);
