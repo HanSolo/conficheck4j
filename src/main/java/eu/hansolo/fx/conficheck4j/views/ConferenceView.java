@@ -24,6 +24,8 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.MapChangeListener;
 import javafx.collections.ObservableList;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
@@ -354,6 +356,43 @@ public class ConferenceView extends Region {
         VBox proposedSessions = new VBox(5);
         proposedSessions.setPadding(new Insets(5, 0, 5, 0));
         proposedSessions.getChildren().setAll(proposed);
+
+        this.conference.get().getProposals().addListener((MapChangeListener<? super ProposalItem, ? super ProposalStatus>) _ -> {
+            List<HBox> prpsd = new ArrayList<>();
+            this.conference.get().getProposals().entrySet().forEach(entry -> {
+                Text proposalText = new Text(entry.getKey().getTitle());
+                proposalText.setTextAlignment(TextAlignment.LEFT);
+                proposalText.setWrappingWidth(300);
+                proposalText.setFont(Fonts.avenirNextLtProRegular(12));
+
+                ComboBox<ProposalStatus> proposalStatusComboBox = new ComboBox<>();
+                proposalStatusComboBox.getItems().addAll(ProposalStatus.values());
+                proposalStatusComboBox.getSelectionModel().select(entry.getValue());
+                proposalStatusComboBox.getEditor().setFont(Fonts.avenirNextLtProRegular(12));
+                proposalStatusComboBox.setCellFactory(_ -> new ListCell<>() {
+                    @Override protected void updateItem(ProposalStatus status, boolean empty) {
+                        super.updateItem(status, empty);
+                        if (empty) {
+                            setText(null);
+                            setGraphic(null);
+                        } else {
+                            setText(status.uiString);
+                            setFont(Fonts.avenirNextLtProRegular(12));
+                        }
+                    }
+                });
+                proposalStatusComboBox.setConverter(new StringConverter<>() {
+                    @Override public String toString(final ProposalStatus status) { return null == status ? "" : status.uiString; }
+                    @Override public ProposalStatus fromString(final String s) { return ProposalStatus.fromText(s); }
+                });
+                proposalStatusComboBox.getSelectionModel().selectedItemProperty().addListener((o, ov, nv) -> this.conference.get().getProposals().put(entry.getKey(), nv));
+                HBox proposalStateBox = new HBox(proposalText, Factory.createSpacer(Orientation.HORIZONTAL), proposalStatusComboBox);
+                proposalStateBox.setAlignment(Pos.CENTER);
+                prpsd.add(proposalStateBox);
+                setPrefHeight(PREFERRED_HEIGHT + prpsd.size() * 20);
+            });
+            proposedSessions.getChildren().setAll(prpsd);
+        });
 
         vBox = new VBox(10, conferenceNameHBox, conferenceDateHBox, urlAndMapHBox, cfpAndAttendenceHBox, proposalsBox, proposedSessions, new Separator(Orientation.HORIZONTAL));
         vBox.setFillWidth(true);
