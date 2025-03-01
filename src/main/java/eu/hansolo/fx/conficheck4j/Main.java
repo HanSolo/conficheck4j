@@ -613,7 +613,7 @@ public class Main extends Application {
         VBox vbox = new VBox(buttonBox, scrollPane);
         vBox.setPadding(new Insets(10));
         vBox.setAlignment(Pos.CENTER);
-        vBox.setPrefWidth(360);
+        vBox.setPrefWidth(400);
         vBox.setPrefHeight(400);
         vBox.setMinHeight(400);
         vBox.setMaxHeight(600);
@@ -623,6 +623,7 @@ public class Main extends Application {
 
         proposalsStage.setOnCloseRequest(e -> proposalsVisible.set(false));
         proposalsStage.setMaxHeight(500);
+        proposalsStage.setWidth(400);
         proposalsStage.setScene(scene);
         proposalsStage.show();
         proposalsStage.setAlwaysOnTop(true);
