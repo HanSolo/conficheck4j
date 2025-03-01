@@ -2,6 +2,7 @@ package eu.hansolo.fx.conficheck4j;
 
 import eu.hansolo.fx.conficheck4j.data.ConferenceItem;
 import eu.hansolo.fx.conficheck4j.data.ConfiModel;
+import eu.hansolo.fx.conficheck4j.data.ProposalItem;
 import eu.hansolo.fx.conficheck4j.data.SpeakerItem;
 import eu.hansolo.fx.conficheck4j.fonts.Fonts;
 import eu.hansolo.fx.conficheck4j.tools.Constants;
@@ -15,6 +16,7 @@ import eu.hansolo.fx.conficheck4j.tools.PersistentToggleGroup;
 import eu.hansolo.fx.conficheck4j.tools.PropertyManager;
 import eu.hansolo.fx.conficheck4j.views.CalendarView;
 import eu.hansolo.fx.conficheck4j.views.ConferenceView;
+import eu.hansolo.fx.conficheck4j.views.ProposalView;
 import eu.hansolo.jdktools.versioning.VersionNumber;
 import javafx.animation.FadeTransition;
 import javafx.animation.Interpolator;
@@ -26,6 +28,8 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.BooleanPropertyBase;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ObjectPropertyBase;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
@@ -77,25 +81,27 @@ import static eu.hansolo.toolbox.Constants.NEW_LINE;
 
 
 public class Main extends Application {
-    public static final VersionNumber             VERSION               = PropertyManager.INSTANCE.getVersionNumber();
-    private             ConfiModel                model;
-    private             Popup                     searchResultPopup;
-    private             ComboBox<String>          continentsComboBox;
-    private             PersistentToggleGroup     filterToggleGroup;
-    private             ToggleButton              allToggleButton       = Factory.createToggleButton(Filter.ALL.getName(), Constants.STD_FONT_SIZE);
-    private             ToggleButton              speakingToggleButton  = Factory.createToggleButton(Filter.SPEAKING.getName(), Constants.STD_FONT_SIZE);
-    private             ToggleButton              attendingToggleButton = Factory.createToggleButton(Filter.ATTENDING.getName(), Constants.STD_FONT_SIZE);
-    private             ToggleButton              cfpOpenToggleButton   = Factory.createToggleButton(Filter.CFP_OPEN.getName(), Constants.STD_FONT_SIZE);
-    private             VBox                      conferencesVBox;
-    private             CalendarView              calendarView;
-    private             VBox                      vBox;
-    private             StackPane                 pane;
-    private             Stage                     stage;
-    private             ObjectProperty<Continent> selectedContinent;
-    private             ObjectProperty<Filter>    selectedFilter;
-    private             BooleanProperty           speakerInfoVisible;
-    private             Clipboard                 clipboard;
-    private             ClipboardContent          clipboardContent;
+    public static final VersionNumber                VERSION               = PropertyManager.INSTANCE.getVersionNumber();
+    private             ConfiModel                   model;
+    private             Popup                        searchResultPopup;
+    private             ComboBox<String>             continentsComboBox;
+    private             PersistentToggleGroup        filterToggleGroup;
+    private             ToggleButton                 allToggleButton       = Factory.createToggleButton(Filter.ALL.getName(), Constants.STD_FONT_SIZE);
+    private             ToggleButton                 speakingToggleButton  = Factory.createToggleButton(Filter.SPEAKING.getName(), Constants.STD_FONT_SIZE);
+    private             ToggleButton                 attendingToggleButton = Factory.createToggleButton(Filter.ATTENDING.getName(), Constants.STD_FONT_SIZE);
+    private             ToggleButton                 cfpOpenToggleButton   = Factory.createToggleButton(Filter.CFP_OPEN.getName(), Constants.STD_FONT_SIZE);
+    private             ObservableList<ProposalItem> proposals             = FXCollections.observableArrayList();
+    private             VBox                         conferencesVBox;
+    private             CalendarView                 calendarView;
+    private             VBox                         vBox;
+    private             StackPane                    pane;
+    private             Stage                        stage;
+    private             ObjectProperty<Continent>    selectedContinent;
+    private             ObjectProperty<Filter>       selectedFilter;
+    private             BooleanProperty              speakerInfoVisible;
+    private             BooleanProperty              proposalsVisible;
+    private             Clipboard                    clipboard;
+    private             ClipboardContent             clipboardContent;
 
 
     @Override public void init() {
@@ -148,6 +154,7 @@ public class Main extends Application {
         Button proposalsButton   = Factory.createButton("Proposals", "Show proposals", Constants.STD_FONT_SIZE);
 
         speakerInfoButton.setOnAction(e -> this.speakerInfoVisible.set(true));
+        proposalsButton.setOnAction(e -> this.proposalsVisible.set(true));
 
         HBox buttonBox = new HBox(5, speakerInfoButton, Factory.createSpacer(Orientation.HORIZONTAL), exportButton, Factory.createSpacer(Orientation.HORIZONTAL), proposalsButton);
 
@@ -175,6 +182,13 @@ public class Main extends Application {
             @Override public Object getBean() { return Main.this; }
             @Override public String getName() { return "speakerInfoVisible"; }
         };
+        this.proposalsVisible   = new BooleanPropertyBase(Boolean.FALSE) {
+            @Override protected void invalidated() { if (get()) { openProposals(); } }
+            @Override public Object getBean() { return Main.this; }
+            @Override public String getName() { return "proposalsVisible"; }
+        };
+
+        this.proposals.setAll(Helper.loadProposals());
 
         registerListeners();
     }
@@ -311,7 +325,7 @@ public class Main extends Application {
     private void openSpeakerInfo() {
         SpeakerItem speakerItem      = Helper.loadSpeakerItem();
         Stage       speakerInfoStage = new Stage();
-        speakerInfoStage.setTitle("JVM Inventory Report Viewer");
+        speakerInfoStage.setTitle("Speaker Info");
 
         // Copied Feedback pane
         Region checkmarkIcon = new Region();
@@ -406,7 +420,7 @@ public class Main extends Application {
         copyNameIcon.setMaxSize(16, 16);
         Tooltip.install(copyNameIcon, new Tooltip("Copy speaker name to clipboard"));
 
-        Label     speakerNameLabel     = Factory.createLabel("Name", Constants.GRAY, Fonts.avenirNextLtProDemi(Constants.STD_FONT_SIZE), Pos.CENTER_RIGHT);
+        Label     speakerNameLabel     = Factory.createLabel("Name", Constants.GRAY, Fonts.avenirNextLtProDemi(Constants.STD_FONT_SIZE), Pos.CENTER_LEFT);
         TextField speakerNameTextField = Factory.createTextField("Your name", "Speaker name", Constants.STD_FONT_SIZE);
         HBox      speakerNameHBox      = new HBox(speakerNameLabel, Factory.createSpacer(Orientation.HORIZONTAL), copyNameIcon);
         VBox      speakerNameBox       = new VBox(speakerNameHBox, speakerNameTextField);
@@ -429,7 +443,7 @@ public class Main extends Application {
         copyBlueSkyIcon.setMaxSize(16, 16);
         Tooltip.install(copyBlueSkyIcon, new Tooltip("Copy speaker bluesky link to clipboard"));
 
-        Label     blueSkyLabel     = Factory.createLabel("BlueSky", Constants.GRAY, Fonts.avenirNextLtProDemi(Constants.STD_FONT_SIZE), Pos.CENTER_RIGHT);
+        Label     blueSkyLabel     = Factory.createLabel("BlueSky", Constants.GRAY, Fonts.avenirNextLtProDemi(Constants.STD_FONT_SIZE), Pos.CENTER_LEFT);
         TextField blueSkyTextField = Factory.createTextField("Your BlueSky account", "Speaker bluesky name", Constants.STD_FONT_SIZE);
         HBox      blueSkyHBox      = new HBox(blueSkyLabel, Factory.createSpacer(Orientation.HORIZONTAL), copyBlueSkyIcon);
         VBox      blueSkyBox       = new VBox(blueSkyHBox, blueSkyTextField);
@@ -452,7 +466,7 @@ public class Main extends Application {
         copyBioIcon.setMaxSize(16, 16);
         Tooltip.install(copyBioIcon, new Tooltip("Copy speaker bio to clipboard"));
 
-        Label    bioLabel     = Factory.createLabel("Bio", Constants.GRAY, Fonts.avenirNextLtProDemi(Constants.STD_FONT_SIZE), Pos.CENTER_RIGHT);
+        Label    bioLabel     = Factory.createLabel("Bio", Constants.GRAY, Fonts.avenirNextLtProDemi(Constants.STD_FONT_SIZE), Pos.CENTER_LEFT);
         TextArea bioTextArea = Factory.createRegularTextArea("Your bio", Constants.BLACK, Constants.STD_FONT_SIZE);
         HBox     bioHBox      = new HBox(bioLabel, Factory.createSpacer(Orientation.HORIZONTAL), copyBioIcon);
         VBox     bioBox       = new VBox(bioHBox, bioTextArea);
@@ -475,7 +489,7 @@ public class Main extends Application {
         copyExperienceIcon.setMaxSize(16, 16);
         Tooltip.install(copyExperienceIcon, new Tooltip("Copy speaker experience to clipboard"));
 
-        Label    experienceLabel    = Factory.createLabel("Experience", Constants.GRAY, Fonts.avenirNextLtProDemi(Constants.STD_FONT_SIZE), Pos.CENTER_RIGHT);
+        Label    experienceLabel    = Factory.createLabel("Experience", Constants.GRAY, Fonts.avenirNextLtProDemi(Constants.STD_FONT_SIZE), Pos.CENTER_LEFT);
         TextArea experienceTextArea = Factory.createRegularTextArea("Your experience as a speaker", Constants.BLACK, Constants.STD_FONT_SIZE);
         HBox     experienceHBox     = new HBox(experienceLabel, Factory.createSpacer(Orientation.HORIZONTAL), copyExperienceIcon);
         VBox     experienceBox      = new VBox(experienceHBox, experienceTextArea);
@@ -530,7 +544,6 @@ public class Main extends Application {
         speakerInfoVBox.setAlignment(Pos.CENTER);
         speakerInfoVBox.setPrefWidth(360);
 
-
         Scene scene = new Scene(new StackPane(speakerInfoVBox, copiedFeedbackPane));
         scene.getStylesheets().add(Main.class.getResource("conficheck4j.css").toExternalForm());
 
@@ -541,7 +554,82 @@ public class Main extends Application {
         speakerInfoStage.toFront();
     }
 
-    private void fadeOutPane(final Pane pane) {
+    private void openProposals() {
+        Stage       proposalsStage = new Stage();
+        proposalsStage.setTitle("Proposals");
+
+        // Copied Feedback pane
+        Region checkmarkIcon = new Region();
+        checkmarkIcon.getStyleClass().add("checkmark-icon");
+        checkmarkIcon.setFocusTraversable(false);
+        checkmarkIcon.setPrefSize(64, 64);
+        checkmarkIcon.setMinSize(64, 64);
+        checkmarkIcon.setMaxSize(64, 64);
+
+        Rectangle checkmarkIconRect = new Rectangle(128, 128);
+        checkmarkIconRect.setArcWidth(30);
+        checkmarkIconRect.setArcHeight(30);
+        checkmarkIconRect.setFill(Color.color(0.0, 0.0, 0.0, 0.5));
+
+        Text copiedText = new Text("Copied");
+        copiedText.setFont(Fonts.avenirNextLtProRegular(Constants.STD_FONT_SIZE));
+        copiedText.setFill(Color.WHITE);
+        copiedText.setTranslateY(50);
+
+        StackPane copiedFeedbackPane = new StackPane(checkmarkIconRect, checkmarkIcon, copiedText);
+        copiedFeedbackPane.setMouseTransparent(true);
+        copiedFeedbackPane.setOpacity(0.0);
+
+        // Proposals
+        if (this.proposals.isEmpty()) { this.proposals.add(new ProposalItem("", "", "")); }
+
+        VBox  proposalsVBox = new VBox();
+        this.proposals.forEach(proposal -> {
+            ProposalView proposalView = new ProposalView(Main.this, copiedFeedbackPane, proposal, clipboard, clipboardContent);
+            proposalsVBox.getChildren().add(proposalView);
+        });
+        ScrollPane scrollPane = new ScrollPane(proposalsVBox);
+        scrollPane.setFitToWidth(true);
+
+        Button addButton = Factory.createButton("Add", "Add new proposals", Constants.STD_FONT_SIZE);
+        addButton.setOnAction(e -> {
+            this.proposals.add(new ProposalItem("", "", ""));
+            proposalsVBox.getChildren().clear();
+            this.proposals.forEach(proposal -> {
+                ProposalView proposalView = new ProposalView(Main.this, copiedFeedbackPane, proposal, clipboard, clipboardContent);
+                proposalsVBox.getChildren().add(proposalView);
+            });
+        });
+
+        Button closeButton = Factory.createButton("Close", "Close proposals dialog", Constants.STD_FONT_SIZE);
+        closeButton.setOnAction(e -> {
+            Helper.saveProposalItems(this.proposals);
+            proposalsStage.close();
+            proposalsVisible.set(false);
+        });
+        HBox   buttonBox = new HBox(addButton, Factory.createSpacer(Orientation.HORIZONTAL), closeButton);
+        buttonBox.setPadding(new Insets(10));
+
+        VBox vbox = new VBox(buttonBox, scrollPane);
+        vBox.setPadding(new Insets(10));
+        vBox.setAlignment(Pos.CENTER);
+        vBox.setPrefWidth(360);
+        vBox.setPrefHeight(400);
+        vBox.setMinHeight(400);
+        vBox.setMaxHeight(600);
+
+        Scene scene = new Scene(new StackPane(vbox, copiedFeedbackPane));
+        scene.getStylesheets().add(Main.class.getResource("conficheck4j.css").toExternalForm());
+
+        proposalsStage.setOnCloseRequest(e -> proposalsVisible.set(false));
+        proposalsStage.setMaxHeight(500);
+        proposalsStage.setScene(scene);
+        proposalsStage.show();
+        proposalsStage.setAlwaysOnTop(true);
+        proposalsStage.toFront();
+    }
+
+    public void fadeOutPane(final Pane pane) {
         final PauseTransition pauseTransition = new PauseTransition(Duration.seconds(0.3));
         final FadeTransition  fadeTransition  = new FadeTransition(Duration.millis(1000));
         fadeTransition.setInterpolator(Interpolator.EASE_OUT);

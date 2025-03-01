@@ -122,6 +122,21 @@ public class Helper {
         return proposals;
     }
 
+    public static final List<ProposalItem> loadProposals() {
+        if (new File(Constants.PROPOSAL_ITEMS_PATH).exists()) {
+            System.out.println("File found");
+            try {
+                final String jsonText = readTextFile(Constants.PROPOSAL_ITEMS_PATH, Charset.defaultCharset());
+                return parseProposalItemsJson(jsonText);
+            } catch (IOException e) {
+                return new ArrayList<>();
+            }
+        } else {
+            System.out.println("File not found");
+            return new ArrayList<>();
+        }
+    }
+
     public static final SpeakerItem loadSpeakerItem() {
         if (new File(Constants.SPEAKER_ITEM_PATH).exists()) {
             try {
@@ -163,7 +178,7 @@ public class Helper {
 
     public static final void saveProposalItems(final List<ProposalItem> proposals) {
         Helper.saveTextFile(new StringBuilder().append(proposals.stream().map(proposalItem -> proposalItem.toJsonString()).collect(
-        Collectors.joining(eu.hansolo.toolbox.Constants.COMMA, eu.hansolo.toolbox.Constants.SQUARE_BRACKET_OPEN, eu.hansolo.toolbox.Constants.SQUARE_BRACKET_CLOSE))).toString(), eu.hansolo.toolbox.Constants.HOME_FOLDER + Constants.APP_NAME + File.separator +  eu.hansolo.fx.conficheck4j.tools.Constants.PROPOSAL_ITEMS_FILENAME);
+        Collectors.joining(eu.hansolo.toolbox.Constants.COMMA, eu.hansolo.toolbox.Constants.SQUARE_BRACKET_OPEN, eu.hansolo.toolbox.Constants.SQUARE_BRACKET_CLOSE))).toString(), Constants.PROPOSAL_ITEMS_PATH);
     }
 
     public static final Optional<Image> loadSpeakerImage() {

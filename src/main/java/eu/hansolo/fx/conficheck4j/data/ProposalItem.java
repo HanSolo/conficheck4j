@@ -39,8 +39,8 @@ public class ProposalItem {
     public final String toJsonString() {
         return new StringBuilder().append(Constants.CURLY_BRACKET_OPEN)
                                   .append(Constants.QUOTES).append(FIELD_TITLE).append(Constants.QUOTES_COLON_QUOTES).append(this.title).append(Constants.QUOTES).append(Constants.COMMA)
-                                  .append(Constants.QUOTES).append(FIELD_TITLE).append(Constants.QUOTES_COLON_QUOTES).append(this.title).append(Constants.QUOTES).append(Constants.COMMA)
-                                  .append(Constants.QUOTES).append(FIELD_TITLE).append(Constants.QUOTES_COLON_QUOTES).append(this.title).append(Constants.QUOTES)
+                                  .append(Constants.QUOTES).append(FIELD_ABSTRACT).append(Constants.QUOTES_COLON_QUOTES).append(this.abstrakt).append(Constants.QUOTES).append(Constants.COMMA)
+                                  .append(Constants.QUOTES).append(FIELD_PITCH).append(Constants.QUOTES_COLON_QUOTES).append(this.pitch).append(Constants.QUOTES)
                                   .append(Constants.CURLY_BRACKET_CLOSE)
                                   .toString();
     }
