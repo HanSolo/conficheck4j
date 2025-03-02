@@ -64,7 +64,7 @@ public class ConfiModel {
         });
     }
 
-    private void loadConferenceItems(final ConfiModel model) {
+    public void loadConferenceItems(final ConfiModel model) {
         try {
             final String jsonText = Helper.readTextFile(Constants.HOME_FOLDER + Constants.APP_NAME + File.separator + Constants.CONFERENCE_ITEMS_FILENAME, Charset.forName("UTF-8"));
             final List<ConferenceItem> conferenceItems = Helper.parseConferenceItemsJson(jsonText, model);

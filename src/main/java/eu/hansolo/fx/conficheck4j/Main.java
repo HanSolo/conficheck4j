@@ -9,6 +9,7 @@ import eu.hansolo.fx.conficheck4j.tools.Constants;
 import eu.hansolo.fx.conficheck4j.tools.Constants.AttendingStatus;
 import eu.hansolo.fx.conficheck4j.tools.Constants.Continent;
 import eu.hansolo.fx.conficheck4j.tools.Constants.Filter;
+import eu.hansolo.fx.conficheck4j.tools.Constants.ProposalStatus;
 import eu.hansolo.fx.conficheck4j.tools.Factory;
 import eu.hansolo.fx.conficheck4j.tools.Helper;
 import eu.hansolo.fx.conficheck4j.tools.IsoCountries;
@@ -28,8 +29,6 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.BooleanPropertyBase;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ObjectPropertyBase;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
@@ -70,14 +69,18 @@ import javafx.util.Duration;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.time.temporal.ChronoField;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
-import java.util.TreeSet;
 import java.util.stream.Collectors;
 
+import static eu.hansolo.toolbox.Constants.COMMA;
 import static eu.hansolo.toolbox.Constants.NEW_LINE;
+import static eu.hansolo.toolbox.Constants.QUOTES;
 
 
 public class Main extends Application {
@@ -101,6 +104,7 @@ public class Main extends Application {
     private             BooleanProperty              proposalsVisible;
     private             Clipboard                    clipboard;
     private             ClipboardContent             clipboardContent;
+    private             DateTimeFormatter            dateFormatter;
 
 
     @Override public void init() {
@@ -116,8 +120,21 @@ public class Main extends Application {
         continentsComboBox.getSelectionModel().select(0);
         continentsComboBox.setMinWidth(120);
         continentsComboBox.getItems().forEach(continent -> continentText.setFont(Fonts.avenirNextLtProRegular(Constants.STD_FONT_SIZE)));
-        HBox continentBox = new HBox(5, continentText, continentsComboBox);
-        continentBox.setAlignment(Pos.BASELINE_LEFT);
+
+        Region reloadIcon = new Region();
+        reloadIcon.getStyleClass().add("reload-icon");
+        reloadIcon.setFocusTraversable(false);
+        reloadIcon.setPrefSize(16, 16);
+        reloadIcon.setMinSize(16, 16);
+        reloadIcon.setMaxSize(16, 16);
+
+        Button reloadButton = new Button("", reloadIcon);
+        reloadButton.setTooltip(new Tooltip("Reload conferences"));
+        reloadButton.setOnAction(e -> this.model.loadConferenceItems(this.model));
+        reloadButton.disableProperty().bind(this.model.networkMonitor.offlineProperty());
+
+        HBox topHBox = new HBox(5, continentText, continentsComboBox, Factory.createSpacer(Orientation.HORIZONTAL), reloadButton);
+        topHBox.setAlignment(Pos.CENTER);
 
         // Filters
         allToggleButton.getStyleClass().add("left-pill");
@@ -153,17 +170,46 @@ public class Main extends Application {
         Button exportButton      = Factory.createButton("Export", "Export conferences visited", Constants.STD_FONT_SIZE);
         Button proposalsButton   = Factory.createButton("Proposals", "Show proposals", Constants.STD_FONT_SIZE);
 
+        // Copied Feedback pane
+        Region checkmarkIcon = new Region();
+        checkmarkIcon.getStyleClass().add("checkmark-icon");
+        checkmarkIcon.setFocusTraversable(false);
+        checkmarkIcon.setPrefSize(64, 64);
+        checkmarkIcon.setMinSize(64, 64);
+        checkmarkIcon.setMaxSize(64, 64);
+
+        Rectangle checkmarkIconRect = new Rectangle(128, 128);
+        checkmarkIconRect.setArcWidth(30);
+        checkmarkIconRect.setArcHeight(30);
+        checkmarkIconRect.setFill(Color.color(0.0, 0.0, 0.0, 0.5));
+
+        Text copiedText = new Text("Copied");
+        copiedText.setFont(Fonts.avenirNextLtProRegular(Constants.STD_FONT_SIZE));
+        copiedText.setFill(Color.WHITE);
+        copiedText.setTranslateY(50);
+
+        StackPane copiedFeedbackPane = new StackPane(checkmarkIconRect, checkmarkIcon, copiedText);
+        copiedFeedbackPane.setMouseTransparent(true);
+        copiedFeedbackPane.setOpacity(0.0);
+
         speakerInfoButton.setOnAction(e -> this.speakerInfoVisible.set(true));
         proposalsButton.setOnAction(e -> this.proposalsVisible.set(true));
+        exportButton.setOnAction(e -> {
+           clipboard.clear();
+           clipboardContent.clear();
+           clipboardContent.putString(getCSVText());
+           clipboard.setContent(clipboardContent);
+            copiedFeedbackPane.setOpacity(1.0);
+            fadeOutPane(copiedFeedbackPane);
+        });
 
         HBox buttonBox = new HBox(5, speakerInfoButton, Factory.createSpacer(Orientation.HORIZONTAL), exportButton, Factory.createSpacer(Orientation.HORIZONTAL), proposalsButton);
 
-        vBox = new VBox(10, continentBox, filterButtons, scrollPane, calendarView, buttonBox);
+        vBox = new VBox(10, topHBox, filterButtons, scrollPane, calendarView, buttonBox);
         vBox.setMinWidth(ConferenceView.MINIMUM_WIDTH + 40);
 
-        this.pane = new StackPane(vBox);
+        this.pane = new StackPane(vBox, copiedFeedbackPane);
         pane.getStyleClass().add("confi-check");
-        //pane.setStyle("-fx-base: " + (eu.hansolo.fx.conficheck4j.tools.Constants.IS_DARK_MODE ? "#202020" : "#ececec"));
         pane.setPadding(new Insets(10, 10, 10, 10));
         pane.setMinSize(600, 720);
 
@@ -187,6 +233,8 @@ public class Main extends Application {
             @Override public Object getBean() { return Main.this; }
             @Override public String getName() { return "proposalsVisible"; }
         };
+
+        this.dateFormatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT);
 
         registerListeners();
     }
@@ -612,6 +660,29 @@ public class Main extends Application {
         proposalsStage.show();
         proposalsStage.setAlwaysOnTop(true);
         proposalsStage.toFront();
+    }
+
+    private String getCSVText() {
+        if (this.model.conferencesPerMonth.isEmpty()) { return ""; }
+        StringBuilder csvText = new StringBuilder("\"Conference\",\"Date\",\"City\",\"Country\",\"Proposal(s)\"\n");
+        for (Integer month : this.model.conferencesPerContinent.keySet()) {
+            for (ConferenceItem conference : this.model.conferencesPerContinent.get(month)) {
+                if (conference.getAttendence() != AttendingStatus.NOT_ATTENDING) {
+                    final ZonedDateTime date = ZonedDateTime.ofInstant(conference.getDate(), ZoneId.systemDefault());
+                    csvText.append(QUOTES).append(conference.getName()).append(QUOTES).append(COMMA).append(QUOTES).append(dateFormatter.format(date)).append(QUOTES).append(COMMA).append(QUOTES).append(conference.getCity()).append(QUOTES).append(COMMA).append(QUOTES).append(conference.getCountry()).append(QUOTES).append(COMMA).append(QUOTES);
+                    if (!conference.getProposals().isEmpty()) {
+                        conference.getProposals().entrySet().forEach(entry -> {
+                            if (entry.getValue() == ProposalStatus.ACCEPTED) {
+                                csvText.append(entry.getKey().getTitle()).append("|");
+                            }
+                        });
+                    }
+                    if (csvText.substring(csvText.length() - 1).equals("|")) { csvText.setLength(csvText.length() - 1); }
+                    csvText.append(QUOTES).append(NEW_LINE);
+                }
+            }
+        }
+        return csvText.toString();
     }
 
     public void fadeOutPane(final Pane pane) {
