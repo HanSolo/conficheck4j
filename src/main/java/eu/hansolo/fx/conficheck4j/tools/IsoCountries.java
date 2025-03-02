@@ -1,6 +1,5 @@
 package eu.hansolo.fx.conficheck4j.tools;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 

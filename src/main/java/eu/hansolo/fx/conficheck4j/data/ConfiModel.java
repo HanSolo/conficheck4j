@@ -4,14 +4,9 @@ import eu.hansolo.fx.conficheck4j.tools.Constants;
 import eu.hansolo.fx.conficheck4j.tools.Constants.ProposalStatus;
 import eu.hansolo.fx.conficheck4j.tools.Helper;
 import eu.hansolo.fx.conficheck4j.tools.NetworkMonitor;
-import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.ObjectPropertyBase;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.MapChangeListener;
@@ -28,7 +23,6 @@ import java.time.temporal.ChronoField;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.TreeSet;
 
 
 public class ConfiModel {
@@ -72,7 +66,7 @@ public class ConfiModel {
                 conference.attendenceProperty().addListener(attendenceListener);
                 conference.getProposals().addListener(proposalListener);
             });
-            conferences.addAll(conferenceItems);
+            conferences.setAll(conferenceItems);
         } catch (IOException e) { }
 
         if (this.networkMonitor.isOnline()) {

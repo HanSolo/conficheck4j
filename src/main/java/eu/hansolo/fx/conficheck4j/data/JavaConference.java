@@ -6,7 +6,6 @@ import eu.hansolo.fx.conficheck4j.tools.Constants.ConferenceType;
 import eu.hansolo.fx.conficheck4j.tools.Helper;
 
 import java.time.Instant;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
