@@ -85,7 +85,7 @@ do
   --java-options '-Djdk.gtk.verbose=true' \
   --java-options '-Djdk.gtk.version=3' \
   --runtime-image build/java-runtime \
-  #--icon resources/icon128.png \
+  --icon resources/icon128.png \
   --linux-shortcut \
   --linux-menu-group "ConfiCheck" \
   --app-version ${APP_VERSION} \
