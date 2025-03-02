@@ -74,7 +74,6 @@ import java.time.format.FormatStyle;
 import java.time.temporal.ChronoField;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -84,27 +83,27 @@ import static eu.hansolo.toolbox.Constants.QUOTES;
 
 
 public class Main extends Application {
-    public static final VersionNumber                VERSION               = PropertyManager.INSTANCE.getVersionNumber();
-    private             ConfiModel                   model;
-    private             Popup                        searchResultPopup;
-    private             ComboBox<String>             continentsComboBox;
-    private             PersistentToggleGroup        filterToggleGroup;
-    private             ToggleButton                 allToggleButton       = Factory.createToggleButton(Filter.ALL.getName(), Constants.STD_FONT_SIZE);
-    private             ToggleButton                 speakingToggleButton  = Factory.createToggleButton(Filter.SPEAKING.getName(), Constants.STD_FONT_SIZE);
-    private             ToggleButton                 attendingToggleButton = Factory.createToggleButton(Filter.ATTENDING.getName(), Constants.STD_FONT_SIZE);
-    private             ToggleButton                 cfpOpenToggleButton   = Factory.createToggleButton(Filter.CFP_OPEN.getName(), Constants.STD_FONT_SIZE);
-    private             VBox                         conferencesVBox;
-    private             CalendarView                 calendarView;
-    private             VBox                         vBox;
-    private             StackPane                    pane;
-    private             Stage                        stage;
-    private             ObjectProperty<Continent>    selectedContinent;
-    private             ObjectProperty<Filter>       selectedFilter;
-    private             BooleanProperty              speakerInfoVisible;
-    private             BooleanProperty              proposalsVisible;
-    private             Clipboard                    clipboard;
-    private             ClipboardContent             clipboardContent;
-    private             DateTimeFormatter            dateFormatter;
+    public static final  VersionNumber             VERSION               = PropertyManager.INSTANCE.getVersionNumber();
+    private              ConfiModel                model;
+    private              Popup                     searchResultPopup;
+    private              ComboBox<String>          continentsComboBox;
+    private              PersistentToggleGroup     filterToggleGroup;
+    private              ToggleButton              allToggleButton       = Factory.createToggleButton(Filter.ALL.getName(), Constants.STD_FONT_SIZE);
+    private              ToggleButton              speakingToggleButton  = Factory.createToggleButton(Filter.SPEAKING.getName(), Constants.STD_FONT_SIZE);
+    private              ToggleButton              attendingToggleButton = Factory.createToggleButton(Filter.ATTENDING.getName(), Constants.STD_FONT_SIZE);
+    private              ToggleButton              cfpOpenToggleButton   = Factory.createToggleButton(Filter.CFP_OPEN.getName(), Constants.STD_FONT_SIZE);
+    private              VBox                      conferencesVBox;
+    private              CalendarView              calendarView;
+    private              VBox                      vBox;
+    private              StackPane                 pane;
+    private              Stage                     stage;
+    private              ObjectProperty<Continent> selectedContinent;
+    private              ObjectProperty<Filter>    selectedFilter;
+    private              BooleanProperty           speakerInfoVisible;
+    private              BooleanProperty           proposalsVisible;
+    private              Clipboard                 clipboard;
+    private              ClipboardContent          clipboardContent;
+    private              DateTimeFormatter         dateFormatter;
 
 
     @Override public void init() {
@@ -343,6 +342,7 @@ public class Main extends Application {
                 VBox monthBox = new VBox();
                 conferencesInMonth.forEach(conference -> monthBox.getChildren().add(new ConferenceView(Main.this, this.model, conference, this.model.allProposals)));
                 TitledPane monthPane = new TitledPane(Constants.MONTHS[month - 1] + " (" + conferencesInMonth.size() + ")", monthBox);
+                monthPane.setAnimated(false);
                 monthPane.setCollapsible(true);
                 switch (this.selectedFilter.get()) {
                     case ALL                            -> monthPane.setExpanded(month == currentMonth);

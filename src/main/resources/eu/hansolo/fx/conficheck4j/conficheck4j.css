@@ -265,6 +265,19 @@
     -fx-padding          : 0;
 }
 
+.titled-pane > .title {
+    -fx-background-color : rgb(200, 200, 200), rgb(228, 228, 228);
+    -fx-background-insets: 0, 1 0 0 0;
+    -fx-background-radius: 0 0 0 0;
+    -fx-padding          : 4 4 4 4;
+    -fx-effect           : null;
+}
+.titled-pane > *.content {
+    -fx-border-color    : -fx-box-border;
+    -fx-border-insets   : -1 0 0 0;
+    -fx-background-color: white;
+}
+
 .dialog-pane {
 
 }

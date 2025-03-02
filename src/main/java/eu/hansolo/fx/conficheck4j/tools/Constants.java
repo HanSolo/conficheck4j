@@ -50,7 +50,7 @@ public final class Constants {
     public static final Color   WHITE                         = Color.WHITE;
     public static final Color   GRAY                          = Color.GRAY;
     public static final Color   DARK_GRAY                     = Color.DARKGRAY;
-    public static final Color   RED                           = Color.color(0.996, 0.000, 0.000, 1.00);
+    public static final Color   RED                           = Color.color(0.996, 0.000, 0.000, 1.00); // RGB 254,   0, 0
     public static final Color   ORANGE                        = Color.color(1.000, 0.365, 0.004, 1.00); // RGB 255,  93, 0
     public static final Color   YELLOW                        = Color.color(1.000, 0.659, 0.000, 1.00); // RGB 255, 168, 0
     public static final Color   GREEN                         = Color.color(0.000, 0.761, 0.004, 1.00); //   0, 194, 1

@@ -27,6 +27,7 @@ import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.MapChangeListener;
 import javafx.collections.ObservableList;
+import javafx.css.PseudoClass;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -34,6 +35,7 @@ import javafx.geometry.Insets;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Button;
+import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
@@ -84,12 +86,12 @@ import java.util.UUID;
  */
 @DefaultProperty("children")
 public class ConferenceView extends Region {
-    public  static final double                         PREFERRED_WIDTH  = 540;
-    public  static final double                         PREFERRED_HEIGHT = 180;
-    public  static final double                         MINIMUM_WIDTH    = 400;
-    public  static final double                         MINIMUM_HEIGHT   = 50;
-    public  static final double                         MAXIMUM_WIDTH    = 1024;
-    public  static final double                         MAXIMUM_HEIGHT   = 1024;
+    public static final  double                         PREFERRED_WIDTH    = 540;
+    public static final  double                         PREFERRED_HEIGHT   = 180;
+    public static final  double                         MINIMUM_WIDTH      = 400;
+    public static final  double                         MINIMUM_HEIGHT     = 50;
+    public static final  double                         MAXIMUM_WIDTH      = 1024;
+    public static final  double                         MAXIMUM_HEIGHT     = 1024;
     private              Main                           main;
     private              ConfiModel                     model;
     private              ObjectProperty<ConferenceItem> conference;
@@ -131,7 +133,8 @@ public class ConferenceView extends Region {
         this.df                       = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM);
         this.isoInfo                  = IsoCountryCodes.searchByName(this.conference.get().getCountry()).orElse(null);
         this.flag                     = null == this.isoInfo ? Flag.NOT_FOUND : this.isoInfo.getFlag();
-        this.hoverBackground          = new Background(new BackgroundFill(Color.color(0.9, 0.9, 0.9), CornerRadii.EMPTY, Insets.EMPTY));
+        this.hoverBackground          = new Background(new BackgroundFill(Color.color(0.95, 0.95, 0.95), CornerRadii.EMPTY, Insets.EMPTY));
+
         initGraphics();
         registerListeners();
     }
@@ -319,80 +322,11 @@ public class ConferenceView extends Region {
         HBox proposalsBox = new HBox(proposalsText, Factory.createSpacer(Orientation.HORIZONTAL), addProposalLabel);
         proposalsBox.setAlignment(Pos.CENTER);
 
-        List<HBox> proposed = new ArrayList<>();
-        this.conference.get().getProposals().entrySet().forEach(entry -> {
-            Text proposalText = new Text(entry.getKey().getTitle());
-            proposalText.setTextAlignment(TextAlignment.LEFT);
-            proposalText.setWrappingWidth(300);
-            proposalText.setFont(Fonts.avenirNextLtProRegular(12));
-
-            ComboBox<ProposalStatus> proposalStatusComboBox = new ComboBox<>();
-            proposalStatusComboBox.getItems().addAll(ProposalStatus.values());
-            proposalStatusComboBox.getSelectionModel().select(entry.getValue());
-            proposalStatusComboBox.getEditor().setFont(Fonts.avenirNextLtProRegular(12));
-            proposalStatusComboBox.setCellFactory(_ -> new ListCell<>() {
-                @Override protected void updateItem(ProposalStatus status, boolean empty) {
-                    super.updateItem(status, empty);
-                    if (empty) {
-                        setText(null);
-                        setGraphic(null);
-                    } else {
-                        setText(status.uiString);
-                        setFont(Fonts.avenirNextLtProRegular(12));
-                    }
-                }
-            });
-            proposalStatusComboBox.setConverter(new StringConverter<>() {
-                @Override public String toString(final ProposalStatus status) { return null == status ? "" : status.uiString; }
-                @Override public ProposalStatus fromString(final String s) { return ProposalStatus.fromText(s); }
-            });
-            proposalStatusComboBox.getSelectionModel().selectedItemProperty().addListener((o, ov, nv) -> this.conference.get().getProposals().put(entry.getKey(), nv));
-            HBox proposalStateBox = new HBox(proposalText, Factory.createSpacer(Orientation.HORIZONTAL), proposalStatusComboBox);
-            proposalStateBox.setAlignment(Pos.CENTER);
-            proposed.add(proposalStateBox);
-            setPrefHeight(PREFERRED_HEIGHT + proposed.size() * 20);
-        });
-
         VBox proposedSessions = new VBox(5);
         proposedSessions.setPadding(new Insets(5, 0, 5, 0));
-        proposedSessions.getChildren().setAll(proposed);
+        updateConferenceProposals(proposedSessions);
 
-        this.conference.get().getProposals().addListener((MapChangeListener<? super ProposalItem, ? super ProposalStatus>) _ -> {
-            List<HBox> prpsd = new ArrayList<>();
-            this.conference.get().getProposals().entrySet().forEach(entry -> {
-                Text proposalText = new Text(entry.getKey().getTitle());
-                proposalText.setTextAlignment(TextAlignment.LEFT);
-                proposalText.setWrappingWidth(300);
-                proposalText.setFont(Fonts.avenirNextLtProRegular(12));
-
-                ComboBox<ProposalStatus> proposalStatusComboBox = new ComboBox<>();
-                proposalStatusComboBox.getItems().addAll(ProposalStatus.values());
-                proposalStatusComboBox.getSelectionModel().select(entry.getValue());
-                proposalStatusComboBox.getEditor().setFont(Fonts.avenirNextLtProRegular(12));
-                proposalStatusComboBox.setCellFactory(_ -> new ListCell<>() {
-                    @Override protected void updateItem(ProposalStatus status, boolean empty) {
-                        super.updateItem(status, empty);
-                        if (empty) {
-                            setText(null);
-                            setGraphic(null);
-                        } else {
-                            setText(status.uiString);
-                            setFont(Fonts.avenirNextLtProRegular(12));
-                        }
-                    }
-                });
-                proposalStatusComboBox.setConverter(new StringConverter<>() {
-                    @Override public String toString(final ProposalStatus status) { return null == status ? "" : status.uiString; }
-                    @Override public ProposalStatus fromString(final String s) { return ProposalStatus.fromText(s); }
-                });
-                proposalStatusComboBox.getSelectionModel().selectedItemProperty().addListener((o, ov, nv) -> this.conference.get().getProposals().put(entry.getKey(), nv));
-                HBox proposalStateBox = new HBox(proposalText, Factory.createSpacer(Orientation.HORIZONTAL), proposalStatusComboBox);
-                proposalStateBox.setAlignment(Pos.CENTER);
-                prpsd.add(proposalStateBox);
-                setPrefHeight(PREFERRED_HEIGHT + prpsd.size() * 20);
-            });
-            proposedSessions.getChildren().setAll(prpsd);
-        });
+        this.conference.get().getProposals().addListener((MapChangeListener<? super ProposalItem, ? super ProposalStatus>) _ -> updateConferenceProposals(proposedSessions));
 
         vBox = new VBox(10, conferenceNameHBox, conferenceDateHBox, urlAndMapHBox, cfpAndAttendenceHBox, proposalsBox, proposedSessions, new Separator(Orientation.HORIZONTAL));
         vBox.setFillWidth(true);
@@ -425,6 +359,50 @@ public class ConferenceView extends Region {
                 this.main.getHostServices().showDocument(url);
             }
         }
+    }
+
+    private void updateConferenceProposals(final VBox proposedSessions) {
+        List<HBox> prpsd = new ArrayList<>();
+        this.conference.get().getProposals().entrySet().forEach(entry -> {
+            Text proposalText = new Text(entry.getKey().getTitle());
+            proposalText.setTextAlignment(TextAlignment.LEFT);
+            proposalText.setWrappingWidth(300);
+            proposalText.setFont(Fonts.avenirNextLtProRegular(12));
+
+            ComboBox<ProposalStatus> proposalStatusComboBox = new ComboBox<>();
+            proposalStatusComboBox.getItems().addAll(ProposalStatus.values());
+            proposalStatusComboBox.getSelectionModel().select(entry.getValue());
+            proposalStatusComboBox.getEditor().setFont(Fonts.avenirNextLtProRegular(12));
+
+            proposalStatusComboBox.setCellFactory(_ -> new ListCell<>() {
+                @Override protected void updateItem(ProposalStatus status, boolean empty) {
+                    super.updateItem(status, empty);
+                    if (empty) {
+                        setText(null);
+                        setGraphic(null);
+                    } else {
+                        setText(status.uiString);
+                        setFont(Fonts.avenirNextLtProRegular(12));
+                        switch (status) {
+                            case NOT_SUBMITTED, SUBMITTED -> { }
+                            case ACCEPTED                 -> { }
+                            case REJECTED                 -> { }
+                        }
+                    }
+                }
+            });
+
+            proposalStatusComboBox.setConverter(new StringConverter<>() {
+                @Override public String toString(final ProposalStatus status) { return null == status ? "" : status.uiString; }
+                @Override public ProposalStatus fromString(final String s) { return ProposalStatus.fromText(s); }
+            });
+            proposalStatusComboBox.getSelectionModel().selectedItemProperty().addListener((o, ov, nv) -> this.conference.get().getProposals().put(entry.getKey(), nv));
+            HBox proposalStateBox = new HBox(proposalText, Factory.createSpacer(Orientation.HORIZONTAL), proposalStatusComboBox);
+            proposalStateBox.setAlignment(Pos.CENTER);
+            prpsd.add(proposalStateBox);
+            setPrefHeight(PREFERRED_HEIGHT + prpsd.size() * 20);
+        });
+        proposedSessions.getChildren().setAll(prpsd);
     }
 
 
