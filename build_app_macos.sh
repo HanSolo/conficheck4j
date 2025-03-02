@@ -69,8 +69,6 @@ $JAVA_HOME/bin/jlink \
 # A loop iterates over the various packaging types supported by jpackage. In
 # the end we will find all packages inside the build/installer directory.
 
-# Somehow before signing there needs to be another step: xattr -cr build/installer/ICClient.app
-
 for type in "app-image" "pkg"
 do
   echo "Creating installer of type ... $type"
