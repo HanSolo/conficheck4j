@@ -13,6 +13,8 @@ import eu.hansolo.fx.conficheck4j.tools.Constants.ProposalStatus;
 import eu.hansolo.fx.conficheck4j.tools.Factory;
 import eu.hansolo.fx.conficheck4j.tools.Helper;
 import eu.hansolo.fx.conficheck4j.tools.IsoCountries;
+import eu.hansolo.fx.conficheck4j.tools.JavaChampion;
+import eu.hansolo.fx.conficheck4j.tools.NetworkMonitor;
 import eu.hansolo.fx.conficheck4j.tools.PersistentToggleGroup;
 import eu.hansolo.fx.conficheck4j.tools.PropertyManager;
 import eu.hansolo.fx.conficheck4j.views.CalendarView;
@@ -51,6 +53,7 @@ import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
@@ -83,7 +86,8 @@ import static eu.hansolo.toolbox.Constants.QUOTES;
 
 
 public class Main extends Application {
-    public static final  VersionNumber             VERSION               = PropertyManager.INSTANCE.getVersionNumber();
+    public  static final VersionNumber             VERSION               = PropertyManager.INSTANCE.getVersionNumber();
+    private static final Image                     JC_IMG                = new Image(Main.class.getResourceAsStream("javachampion.png"));
     private              ConfiModel                model;
     private              Popup                     searchResultPopup;
     private              ComboBox<String>          continentsComboBox;
@@ -269,6 +273,10 @@ public class Main extends Application {
         stage.show();
         stage.centerOnScreen();
 
+        if (NetworkMonitor.INSTANCE.isOnline()) {
+            Constants.JAVA_CHAMPIONS.addAll(Helper.getJavaChampions());
+        }
+
         calendarView.setToInitialPosition();
         updateView();
     }
@@ -355,7 +363,17 @@ public class Main extends Application {
     }
 
     private void openSpeakerInfo() {
-        SpeakerItem speakerItem      = Helper.loadSpeakerItem();
+        SpeakerItem speakerItem    = Helper.loadSpeakerItem();
+        boolean     isJavaChampion = Constants.JAVA_CHAMPIONS.stream()
+                                                             .filter(champion -> champion.lastName().equalsIgnoreCase(speakerItem.getLastName()))
+                                                             .filter(champion -> champion.firstName().equalsIgnoreCase(speakerItem.getFirstName()))
+                                                             .filter(champion -> champion.title().equalsIgnoreCase(speakerItem.getTitle()))
+                                                             .findFirst().isPresent();
+
+        ImageView javaChampionImg = new ImageView(JC_IMG);
+        javaChampionImg.setFitWidth(24);
+        javaChampionImg.setFitHeight(24);
+
         Stage       speakerInfoStage = new Stage();
         speakerInfoStage.setTitle("Speaker Info");
 
@@ -453,14 +471,36 @@ public class Main extends Application {
         Tooltip.install(copyNameIcon, new Tooltip("Copy speaker name to clipboard"));
 
         Label     speakerNameLabel     = Factory.createLabel("Name", Constants.GRAY, Fonts.avenirNextLtProDemi(Constants.STD_FONT_SIZE), Pos.CENTER_LEFT);
-        TextField speakerNameTextField = Factory.createTextField("Your name", "Speaker name", Constants.STD_FONT_SIZE);
         HBox      speakerNameHBox      = new HBox(speakerNameLabel, Factory.createSpacer(Orientation.HORIZONTAL), copyNameIcon);
-        VBox      speakerNameBox       = new VBox(speakerNameHBox, speakerNameTextField);
-        speakerNameTextField.setText(speakerItem.getName());
+
+        Label     speakerTitleLabel     = Factory.createLabel("First", Constants.GRAY, Fonts.avenirNextLtProDemi(Constants.STD_FONT_SIZE), Pos.CENTER_LEFT);
+        TextField speakerTitleTextField = Factory.createTextField("Your title, if any (e.g. Dr., Phd.)", "Speaker title", Constants.STD_FONT_SIZE);
+        HBox      speakerTitleHBox      = new HBox(5, speakerTitleLabel, speakerTitleTextField);
+        HBox.setHgrow(speakerTitleTextField, Priority.ALWAYS);
+        speakerTitleHBox.setAlignment(Pos.CENTER);
+
+        Label     speakerFirstNameLabel     = Factory.createLabel("First", Constants.GRAY, Fonts.avenirNextLtProDemi(Constants.STD_FONT_SIZE), Pos.CENTER_LEFT);
+        TextField speakerFirstNameTextField = Factory.createTextField("Your first name", "Speaker first name", Constants.STD_FONT_SIZE);
+        HBox      speakerFirstNameHBox      = new HBox(5, speakerFirstNameLabel, speakerFirstNameTextField);
+        HBox.setHgrow(speakerFirstNameTextField, Priority.ALWAYS);
+        speakerFirstNameHBox.setAlignment(Pos.CENTER);
+
+        Label     speakerLastNameLabel      = Factory.createLabel("Last", Constants.GRAY, Fonts.avenirNextLtProDemi(Constants.STD_FONT_SIZE), Pos.CENTER_LEFT);
+        TextField speakerLastNameTextField  = Factory.createTextField("Your last name", "Speaker last name", Constants.STD_FONT_SIZE);
+        HBox      speakerLastNameHBox       = new HBox(5, speakerLastNameLabel, speakerLastNameTextField);
+        HBox.setHgrow(speakerLastNameTextField, Priority.ALWAYS);
+        speakerLastNameHBox.setAlignment(Pos.CENTER);
+
+        VBox      speakerNamesBox           = new VBox(speakerNameHBox, speakerTitleHBox, speakerFirstNameHBox, speakerLastNameHBox);
+
+        speakerTitleTextField.setText(speakerItem.getTitle());
+        speakerFirstNameTextField.setText(speakerItem.getFirstName());
+        speakerLastNameTextField.setText(speakerItem.getLastName());
+
         copyNameIcon.setOnMousePressed(e -> {
             clipboard.clear();
             clipboardContent.clear();
-            clipboardContent.putString(speakerNameTextField.getText());
+            clipboardContent.putString(String.join(" ", speakerTitleTextField.getText().trim(), speakerFirstNameTextField.getText().trim(), speakerLastNameTextField.getText().trim()));
             clipboard.setContent(clipboardContent);
             copiedFeedbackPane.setOpacity(1.0);
             fadeOutPane(copiedFeedbackPane);
@@ -539,7 +579,7 @@ public class Main extends Application {
         copySpeakerInfoButton.setOnAction(e -> {
            final StringBuilder speakerInfoBuilder = new StringBuilder();
            speakerInfoBuilder.append("Name").append(NEW_LINE)
-                             .append(speakerNameTextField.getText()).append(NEW_LINE)
+                             .append(speakerTitleTextField.getText().trim()).append(speakerTitleTextField.getText().trim().isEmpty() ? "" : " ").append(speakerFirstNameTextField.getText().trim()).append(" ").append(speakerLastNameTextField.getText().trim()).append(NEW_LINE)
                              .append(NEW_LINE)
                              .append("BlueSky").append(NEW_LINE)
                              .append("https://bsky.app/profile/").append(blueSkyTextField.getText()).append(NEW_LINE)
@@ -560,18 +600,20 @@ public class Main extends Application {
 
         Button closeButton = Factory.createButton("Close", "Close speaker info dialog", Constants.STD_FONT_SIZE);
         closeButton.setOnAction(e -> {
-            speakerItem.setName(speakerNameTextField.getText());
-            speakerItem.setBluesky(blueSkyTextField.getText());
-            speakerItem.setBio(bioTextArea.getText());
-            speakerItem.setExperience(experienceTextArea.getText());
+            speakerItem.setTitle(speakerTitleTextField.getText().trim());
+            speakerItem.setFirstName(speakerFirstNameTextField.getText().trim());
+            speakerItem.setLastName(speakerLastNameTextField.getText().trim());
+            speakerItem.setBluesky(blueSkyTextField.getText().trim());
+            speakerItem.setBio(bioTextArea.getText().trim());
+            speakerItem.setExperience(experienceTextArea.getText().trim());
             Helper.saveSpeakerItem(speakerItem);
             speakerInfoStage.close();
             speakerInfoVisible.set(false);
         });
-        HBox   buttonBox = new HBox(copySpeakerInfoButton, Factory.createSpacer(Orientation.HORIZONTAL), closeButton);
+        HBox   buttonBox = new HBox(copySpeakerInfoButton, Factory.createSpacer(Orientation.HORIZONTAL), (isJavaChampion ? javaChampionImg : Factory.createSpacer(Orientation.HORIZONTAL)), Factory.createSpacer(Orientation.HORIZONTAL), closeButton);
         buttonBox.setPadding(new Insets(10));
 
-        VBox  speakerInfoVBox  = new VBox(15, speakerImagePane, copySpeakerImageButton, speakerNameBox, blueSkyBox, bioBox, experienceBox, buttonBox);
+        VBox  speakerInfoVBox  = new VBox(15, speakerImagePane, copySpeakerImageButton, speakerNamesBox, blueSkyBox, bioBox, experienceBox, buttonBox);
         speakerInfoVBox.setPadding(new Insets(10));
         speakerInfoVBox.setAlignment(Pos.CENTER);
         speakerInfoVBox.setPrefWidth(360);
@@ -698,6 +740,9 @@ public class Main extends Application {
     }
 
     public static void main(String[] args) {
+        List<JavaChampion> javaChampions = Helper.getJavaChampions();
+        javaChampions.forEach(System.out::println);
+
         launch(args);
     }
 }

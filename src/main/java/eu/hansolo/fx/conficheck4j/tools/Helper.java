@@ -131,10 +131,10 @@ public class Helper {
                 final String jsonText = readTextFile(Constants.SPEAKER_ITEM_PATH, Charset.defaultCharset());
                 return SpeakerItem.fromJsonString(jsonText);
             } catch (IOException e) {
-                return new SpeakerItem("", "", "", "");
+                return new SpeakerItem("", "", "", "", "", "");
             }
         } else {
-            return new SpeakerItem("", "", "", "");
+            return new SpeakerItem("", "", "", "", "", "");
         }
     }
     public static final void saveSpeakerItem(final SpeakerItem speakerItem) {
@@ -279,6 +279,24 @@ public class Helper {
     public static int countWords(final String text) {
         StringTokenizer st = new StringTokenizer(text);
         return st.countTokens();
+    }
+
+    public static List<JavaChampion> getJavaChampions() {
+        final List<JavaChampion> javaChampions = new ArrayList<>();
+        final String             yaml          = getTextFromUrl(Constants.JAVA_CHAMPIONS_YAML_URL);
+        yaml.lines().forEach(line -> {
+            Constants.YAML_NAME_MATCHER.reset(line);
+            if (Constants.YAML_NAME_MATCHER.matches()) {
+                final String title     = Constants.YAML_NAME_MATCHER.group(1) != null ? Constants.YAML_NAME_MATCHER.group(1) : "";
+                String firstName = Constants.YAML_NAME_MATCHER.group(2) != null ? Constants.YAML_NAME_MATCHER.group(2) : "";
+                if (Constants.YAML_NAME_MATCHER.group(3) != null) { firstName += " " + Constants.YAML_NAME_MATCHER.group(3); }
+                String lastName = "";
+                if (Constants.YAML_NAME_MATCHER.group(4) != null) { lastName += " " + Constants.YAML_NAME_MATCHER.group(4); }
+                if (Constants.YAML_NAME_MATCHER.group(5) != null) { lastName += " " + Constants.YAML_NAME_MATCHER.group(5); }
+                javaChampions.add(new JavaChampion(title.trim(), firstName.trim(), lastName.trim()));
+            }
+        });
+        return javaChampions;
     }
 
     public static final boolean isDarkMode() {

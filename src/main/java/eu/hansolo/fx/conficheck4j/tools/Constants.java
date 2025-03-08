@@ -3,60 +3,68 @@ package eu.hansolo.fx.conficheck4j.tools;
 import javafx.scene.paint.Color;
 
 import java.io.File;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 
 public final class Constants {
-    public static final String  APP_NAME                     = "ConfiCheck";
-    public static final int     APP_REFRESH_INTERVAL         = 3600;
-    public static final String  JAVA_CONFERENCES_JSON_URL    = "https://javaconferences.org/conferences.json";
+    public static final String   APP_NAME                     = "ConfiCheck";
+    public static final int      APP_REFRESH_INTERVAL         = 3600;
+    public static final String   JAVA_CONFERENCES_JSON_URL    = "https://javaconferences.org/conferences.json";
+    public static final String   JAVA_CHAMPIONS_YAML_URL      = "https://raw.githubusercontent.com/aalmiray/java-champions/refs/heads/main/java-champions.yml";
 
-    public static final boolean IS_DARK_MODE                 = Helper.isDarkMode();
+    public static final boolean  IS_DARK_MODE                 = Helper.isDarkMode();
 
-    public static final String  HOME_FOLDER                  = new StringBuilder(System.getProperty("user.home")).append(File.separator).toString();
-    public static final String  CONFERENCE_ITEMS_FILENAME    = "conference_items.json";
-    public static final String  PROPOSAL_ITEMS_FILENAME      = "proposal_items.json";
-    public static final String  PROPOSAL_ITEMS_PATH          = HOME_FOLDER + APP_NAME + File.separator + PROPOSAL_ITEMS_FILENAME;
-    public static final String  SPEAKER_ITEM_FILENAME        = "speaker_item.json";
-    public static final String  SPEAKER_IMAGE_FILENAME       = "speaker_image.jpg";
-    public static final String  SPEAKER_IMAGE_PATH           = HOME_FOLDER + APP_NAME + File.separator + SPEAKER_IMAGE_FILENAME;
-    public static final String  SPEAKER_ITEM_PATH            = HOME_FOLDER + APP_NAME + File.separator + SPEAKER_ITEM_FILENAME;
+    public static final String   HOME_FOLDER                  = new StringBuilder(System.getProperty("user.home")).append(File.separator).toString();
+    public static final String   CONFERENCE_ITEMS_FILENAME    = "conference_items.json";
+    public static final String   PROPOSAL_ITEMS_FILENAME      = "proposal_items.json";
+    public static final String   PROPOSAL_ITEMS_PATH          = HOME_FOLDER + APP_NAME + File.separator + PROPOSAL_ITEMS_FILENAME;
+    public static final String   SPEAKER_ITEM_FILENAME        = "speaker_item.json";
+    public static final String   SPEAKER_IMAGE_FILENAME       = "speaker_image.jpg";
+    public static final String   SPEAKER_IMAGE_PATH           = HOME_FOLDER + APP_NAME + File.separator + SPEAKER_IMAGE_FILENAME;
+    public static final String   SPEAKER_ITEM_PATH            = HOME_FOLDER + APP_NAME + File.separator + SPEAKER_ITEM_FILENAME;
 
-    public static final Pattern JAVA_CONFERENCE_DATE_REGEX   = Pattern.compile("(([0-9]{1,2})\\s+([A-Za-z]+)\\s+([0-9]{4}))|(([0-9]{1,2})[-–]([0-9]{1,2})\\s+([a-zA-Z]+)\\s+([0-9]{4}))|(([0-9]{1,2})\\s+([a-zA-Z]+)\\s-\\s+([0-9]{1,2})\\s([a-zA-Z]+)\\s+([0-9]{4}))");
-    public static final Matcher JAVA_CONFERENCE_DATE_MATCHER = JAVA_CONFERENCE_DATE_REGEX.matcher("");
-    public static final Pattern EVENT_ITEM_LOCATION_REGEX    = Pattern.compile("(@\\s([a-zA-Z\\s]+)\\()");
-    public static final Matcher EVENT_ITEM_LOCATION_MATCHER  = EVENT_ITEM_LOCATION_REGEX.matcher("");
-    public static final Pattern EVENT_ITEM_CITY_REGEX        = Pattern.compile("([A-Za-z0-9\\w\\.\\-\\s]+),");
-    public static final Matcher EVENT_ITEM_CITY_MATCHER      = EVENT_ITEM_CITY_REGEX.matcher("");
-    public static final Pattern EVENT_ITEM_COUNTRY_REGEX     = Pattern.compile("(@\\s([a-zA-Z\\s]+)\\(([a-zA-Z\\s-]+)\\))");
-    public static final Matcher EVENT_ITEM_COUNTRY_MATCHER   = EVENT_ITEM_COUNTRY_REGEX.matcher("");
-    public static final Pattern EVENT_ITEM_DATE_REGEX        = Pattern.compile("(\\s-\\s(([A-Za-z]{3})\\s([A-Za-z]{3})\\s([0-9]{1,2})\\s([0-9]{4})))");
-    public static final Matcher EVENT_ITEM_DATE_MATCHER      = EVENT_ITEM_DATE_REGEX.matcher("");
+    public static final Pattern  JAVA_CONFERENCE_DATE_REGEX   = Pattern.compile("(([0-9]{1,2})\\s+([A-Za-z]+)\\s+([0-9]{4}))|(([0-9]{1,2})[-–]([0-9]{1,2})\\s+([a-zA-Z]+)\\s+([0-9]{4}))|(([0-9]{1,2})\\s+([a-zA-Z]+)\\s-\\s+([0-9]{1,2})\\s([a-zA-Z]+)\\s+([0-9]{4}))");
+    public static final Matcher  JAVA_CONFERENCE_DATE_MATCHER = JAVA_CONFERENCE_DATE_REGEX.matcher("");
+    public static final Pattern  EVENT_ITEM_LOCATION_REGEX    = Pattern.compile("(@\\s([a-zA-Z\\s]+)\\()");
+    public static final Matcher  EVENT_ITEM_LOCATION_MATCHER  = EVENT_ITEM_LOCATION_REGEX.matcher("");
+    public static final Pattern  EVENT_ITEM_CITY_REGEX        = Pattern.compile("([A-Za-z0-9\\w.\\-\\s]+),");
+    public static final Matcher  EVENT_ITEM_CITY_MATCHER      = EVENT_ITEM_CITY_REGEX.matcher("");
+    public static final Pattern  EVENT_ITEM_COUNTRY_REGEX     = Pattern.compile("(@\\s([a-zA-Z\\s]+)\\(([a-zA-Z\\s-]+)\\))");
+    public static final Matcher  EVENT_ITEM_COUNTRY_MATCHER   = EVENT_ITEM_COUNTRY_REGEX.matcher("");
+    public static final Pattern  EVENT_ITEM_DATE_REGEX        = Pattern.compile("(\\s-\\s(([A-Za-z]{3})\\s([A-Za-z]{3})\\s([0-9]{1,2})\\s([0-9]{4})))");
+    public static final Matcher  EVENT_ITEM_DATE_MATCHER      = EVENT_ITEM_DATE_REGEX.matcher("");
+    public static final Pattern  YAML_NAME_REGEX              = Pattern.compile(
+    "^\\s+-\\s+name:\\s+(Dr\\.\\s|Prof\\.\\s|Phd\\.\\s)?([a-zA-ZäüöÄÜÖßéÉáÁóÓíÍèÈàÀòÒìÌêÊâÂôÔîÎ\\-]+)\\s?([a-zA-ZäüöÄÜÖßéÉáÁóÓíÍèÈàÀòÒìÌêÊâÂôÔîÎ\\-]+)?\\s?([a-zA-ZäüöÄÜÖßéÉáÁóÓíÍèÈàÀòÒìÌêÊâÂôÔîÎ\\-]+)?\\s+([a-zA-ZäüöÄÜÖßéÉáÁóÓíÍèÈàÀòÒìÌêÊâÂôÔîÎ\\-]+)$");
+    public static final Matcher  YAML_NAME_MATCHER            = YAML_NAME_REGEX.matcher("");
 
-    public static final String  CITY_DELIMITER               = ",";
-    public static final String  PROFILE_IMAGE_NAME           = "ProfileImage";
+    public static final String   CITY_DELIMITER               = ",";
+    public static final String   PROFILE_IMAGE_NAME           = "ProfileImage";
 
-    public static final int     SECONDS_PER_HOUR              = 3600;
-    public static final int     SECONDS_PER_DAY               = 86400;
-    public static final int     SECONDS_PER_WEEK              = 604800;
+    public static final int      SECONDS_PER_HOUR              = 3600;
+    public static final int      SECONDS_PER_DAY               = 86400;
+    public static final int      SECONDS_PER_WEEK              = 604800;
 
-    public static final long    PING_INTERVAL_IN_SEC          = 2;
-    public static final String  TEST_CONNECTIVITY_URL         = "https://apple.com";
+    public static final long     PING_INTERVAL_IN_SEC          = 2;
+    public static final String   TEST_CONNECTIVITY_URL         = "https://apple.com";
 
-    public static final double  STD_FONT_SIZE                 = 12;
+    public static final double   STD_FONT_SIZE                 = 12;
 
-    public static final Color   BLACK                         = Color.BLACK;
-    public static final Color   WHITE                         = Color.WHITE;
-    public static final Color   GRAY                          = Color.GRAY;
-    public static final Color   DARK_GRAY                     = Color.DARKGRAY;
-    public static final Color   RED                           = Color.color(0.996, 0.000, 0.000, 1.00); // RGB 254,   0, 0
-    public static final Color   ORANGE                        = Color.color(1.000, 0.365, 0.004, 1.00); // RGB 255,  93, 0
-    public static final Color   YELLOW                        = Color.color(1.000, 0.659, 0.000, 1.00); // RGB 255, 168, 0
-    public static final Color   GREEN                         = Color.color(0.000, 0.761, 0.004, 1.00); //   0, 194, 1
-    public static final Color   PURPLE                        = Color.color(0.620, 0.120, 0.640, 1.00);
+    public static final Color    BLACK                         = Color.BLACK;
+    public static final Color    WHITE                         = Color.WHITE;
+    public static final Color    GRAY                          = Color.GRAY;
+    public static final Color    DARK_GRAY                     = Color.DARKGRAY;
+    public static final Color    RED                           = Color.color(0.996, 0.000, 0.000, 1.00); // RGB 254,   0, 0
+    public static final Color    ORANGE                        = Color.color(1.000, 0.365, 0.004, 1.00); // RGB 255,  93, 0
+    public static final Color    YELLOW                        = Color.color(1.000, 0.659, 0.000, 1.00); // RGB 255, 168, 0
+    public static final Color    GREEN                         = Color.color(0.000, 0.761, 0.004, 1.00); //   0, 194, 1
+    public static final Color    PURPLE                        = Color.color(0.620, 0.120, 0.640, 1.00);
 
-    public static final String[] MONTHS                       = { "JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE", "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER" };
+    public static final String[] MONTHS                        = { "JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE", "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER" };
+
+    public static final List<JavaChampion> JAVA_CHAMPIONS      = new CopyOnWriteArrayList<>();
 
     public enum ConferenceType {
         IN_PERSON("In-Person", "in_person"),
