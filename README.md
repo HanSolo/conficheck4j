@@ -7,10 +7,10 @@ a picture.
 All of the speaker info can be copied to the clipboard so that you can easily paste it anywhere.
 
 ### Main Screen
-![Main](https://github.com/HanSolo/conficheck4j/raw/dev/resources/ConfiCheck_Main.png)
+![Main](https://github.com/HanSolo/conficheck4j/raw/main/resources/ConfiCheck_Main.png)
 
 ### Speaker Screen
-![Speaker](https://github.com/HanSolo/conficheck4j/raw/dev/resources/ConfiCheck_Speaker.png)
+![Speaker](https://github.com/HanSolo/conficheck4j/raw/main/resources/ConfiCheck_Speaker.png)
 
 ### Proposals Screen
-![Proposals](https://github.com/HanSolo/conficheck4j/raw/dev/resources/ConfiCheck_Proposals.png)
+![Proposals](https://github.com/HanSolo/conficheck4j/raw/main/resources/ConfiCheck_Proposals.png)
