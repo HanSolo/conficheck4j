@@ -36,8 +36,7 @@ public final class Constants {
     public static final Matcher  EVENT_ITEM_COUNTRY_MATCHER   = EVENT_ITEM_COUNTRY_REGEX.matcher("");
     public static final Pattern  EVENT_ITEM_DATE_REGEX        = Pattern.compile("(\\s-\\s(([A-Za-z]{3})\\s([A-Za-z]{3})\\s([0-9]{1,2})\\s([0-9]{4})))");
     public static final Matcher  EVENT_ITEM_DATE_MATCHER      = EVENT_ITEM_DATE_REGEX.matcher("");
-    public static final Pattern  YAML_NAME_REGEX              = Pattern.compile(
-    "^\\s+-\\s+name:\\s+(Dr\\.\\s|Prof\\.\\s|Phd\\.\\s)?([a-zA-ZäüöÄÜÖßéÉáÁóÓíÍèÈàÀòÒìÌêÊâÂôÔîÎ\\-]+)\\s?([a-zA-ZäüöÄÜÖßéÉáÁóÓíÍèÈàÀòÒìÌêÊâÂôÔîÎ\\-]+)?\\s?([a-zA-ZäüöÄÜÖßéÉáÁóÓíÍèÈàÀòÒìÌêÊâÂôÔîÎ\\-]+)?\\s+([a-zA-ZäüöÄÜÖßéÉáÁóÓíÍèÈàÀòÒìÌêÊâÂôÔîÎ\\-]+)$");
+    public static final Pattern  YAML_NAME_REGEX              = Pattern.compile("^\\s+\\-\\s+name:\\s+(Prof.\\s?Dr.\\s|Dr.\\s?Dr.\\s|Dr\\.\\s|Prof\\.\\s|Phd\\.\\s)?([a-zA-ZäüöÄÜÖßéÉáÁóÓíÍèÈàÀòÒìÌêÊâÂôÔîÎÚúÙùÛûçčåÅïÏ\\-]+)\\s?([a-zA-ZäüöÄÜÖßéÉáÁóÓíÍèÈàÀòÒìÌêÊâÂôÔîÎÚúÙùÛûçčåÅïÏ\\-]+)?\\s?([a-zA-ZäüöÄÜÖßéÉáÁóÓíÍèÈàÀòÒìÌêÊâÂôÔîÎÚúÙùÛûçčåÅïÏ\\-]+)?\\s?([a-zA-ZäüöÄÜÖßéÉáÁóÓíÍèÈàÀòÒìÌêÊâÂôÔîÎÚúÙùÛûçčåÅïÏ\\-]+)?\\s?([a-zA-ZäüöÄÜÖßéÉáÁóÓíÍèÈàÀòÒìÌêÊâÂôÔîÎÚúÙùÛûçčåÅïÏ\\-]+)?\\s+([a-zA-ZäüöÄÜÖßéÉáÁóÓíÍèÈàÀòÒìÌêÊâÂôÔîÎÚúÙùÛûçčåÅïÏ\\-]+)$");
     public static final Matcher  YAML_NAME_MATCHER            = YAML_NAME_REGEX.matcher("");
 
     public static final String   CITY_DELIMITER               = ",";

@@ -377,8 +377,9 @@ public class Main extends Application {
         ImageView javaChampionImg = new ImageView(JC_IMG);
         javaChampionImg.setFitWidth(24);
         javaChampionImg.setFitHeight(24);
+        Tooltip.install(javaChampionImg, new Tooltip("Java Champion"));
 
-        Stage       speakerInfoStage = new Stage();
+        Stage speakerInfoStage = new Stage();
         speakerInfoStage.setTitle("Speaker Info");
 
         // Copied Feedback pane
@@ -480,18 +481,21 @@ public class Main extends Application {
 
         Label     speakerTitleLabel     = Factory.createLabel("First", Constants.GRAY, Fonts.avenirNextLtProDemi(Constants.STD_FONT_SIZE), Pos.CENTER_LEFT);
         TextField speakerTitleTextField = Factory.createTextField("Your title, if any (e.g. Dr., Phd.)", "Speaker title", Constants.STD_FONT_SIZE);
+        speakerTitleTextField.setFocusTraversable(true);
         HBox      speakerTitleHBox      = new HBox(5, speakerTitleLabel, speakerTitleTextField);
         HBox.setHgrow(speakerTitleTextField, Priority.ALWAYS);
         speakerTitleHBox.setAlignment(Pos.CENTER);
 
         Label     speakerFirstNameLabel     = Factory.createLabel("First", Constants.GRAY, Fonts.avenirNextLtProDemi(Constants.STD_FONT_SIZE), Pos.CENTER_LEFT);
         TextField speakerFirstNameTextField = Factory.createTextField("Your first name", "Speaker first name", Constants.STD_FONT_SIZE);
+        speakerFirstNameTextField.setFocusTraversable(true);
         HBox      speakerFirstNameHBox      = new HBox(5, speakerFirstNameLabel, speakerFirstNameTextField);
         HBox.setHgrow(speakerFirstNameTextField, Priority.ALWAYS);
         speakerFirstNameHBox.setAlignment(Pos.CENTER);
 
         Label     speakerLastNameLabel      = Factory.createLabel("Last", Constants.GRAY, Fonts.avenirNextLtProDemi(Constants.STD_FONT_SIZE), Pos.CENTER_LEFT);
         TextField speakerLastNameTextField  = Factory.createTextField("Your last name", "Speaker last name", Constants.STD_FONT_SIZE);
+        speakerLastNameTextField.setFocusTraversable(true);
         HBox      speakerLastNameHBox       = new HBox(5, speakerLastNameLabel, speakerLastNameTextField);
         HBox.setHgrow(speakerLastNameTextField, Priority.ALWAYS);
         speakerLastNameHBox.setAlignment(Pos.CENTER);
@@ -522,6 +526,7 @@ public class Main extends Application {
 
         Label     blueSkyLabel     = Factory.createLabel("BlueSky", Constants.GRAY, Fonts.avenirNextLtProDemi(Constants.STD_FONT_SIZE), Pos.CENTER_LEFT);
         TextField blueSkyTextField = Factory.createTextField("Your BlueSky account", "Speaker bluesky name", Constants.STD_FONT_SIZE);
+        blueSkyTextField.setFocusTraversable(true);
         HBox      blueSkyHBox      = new HBox(blueSkyLabel, Factory.createSpacer(Orientation.HORIZONTAL), copyBlueSkyIcon);
         VBox      blueSkyBox       = new VBox(blueSkyHBox, blueSkyTextField);
         blueSkyTextField.setText(speakerItem.getBluesky());
@@ -545,6 +550,7 @@ public class Main extends Application {
 
         Label    bioLabel     = Factory.createLabel("Bio", Constants.GRAY, Fonts.avenirNextLtProDemi(Constants.STD_FONT_SIZE), Pos.CENTER_LEFT);
         TextArea bioTextArea = Factory.createRegularTextArea("Your bio", Constants.BLACK, Constants.STD_FONT_SIZE);
+        bioTextArea.setFocusTraversable(true);
         HBox     bioHBox      = new HBox(bioLabel, Factory.createSpacer(Orientation.HORIZONTAL), copyBioIcon);
         VBox     bioBox       = new VBox(bioHBox, bioTextArea);
         bioTextArea.setText(speakerItem.getBio());
@@ -568,6 +574,7 @@ public class Main extends Application {
 
         Label    experienceLabel    = Factory.createLabel("Experience", Constants.GRAY, Fonts.avenirNextLtProDemi(Constants.STD_FONT_SIZE), Pos.CENTER_LEFT);
         TextArea experienceTextArea = Factory.createRegularTextArea("Your experience as a speaker", Constants.BLACK, Constants.STD_FONT_SIZE);
+        experienceTextArea.setFocusTraversable(true);
         HBox     experienceHBox     = new HBox(experienceLabel, Factory.createSpacer(Orientation.HORIZONTAL), copyExperienceIcon);
         VBox     experienceBox      = new VBox(experienceHBox, experienceTextArea);
         experienceTextArea.setText(speakerItem.getExperience());

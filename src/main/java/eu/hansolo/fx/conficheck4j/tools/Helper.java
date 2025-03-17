@@ -287,12 +287,14 @@ public class Helper {
         yaml.lines().forEach(line -> {
             Constants.YAML_NAME_MATCHER.reset(line);
             if (Constants.YAML_NAME_MATCHER.matches()) {
-                final String title     = Constants.YAML_NAME_MATCHER.group(1) != null ? Constants.YAML_NAME_MATCHER.group(1) : "";
+                final String title = Constants.YAML_NAME_MATCHER.group(1) != null ? Constants.YAML_NAME_MATCHER.group(1) : "";
                 String firstName = Constants.YAML_NAME_MATCHER.group(2) != null ? Constants.YAML_NAME_MATCHER.group(2) : "";
                 if (Constants.YAML_NAME_MATCHER.group(3) != null) { firstName += " " + Constants.YAML_NAME_MATCHER.group(3); }
                 String lastName = "";
                 if (Constants.YAML_NAME_MATCHER.group(4) != null) { lastName += " " + Constants.YAML_NAME_MATCHER.group(4); }
                 if (Constants.YAML_NAME_MATCHER.group(5) != null) { lastName += " " + Constants.YAML_NAME_MATCHER.group(5); }
+                if (Constants.YAML_NAME_MATCHER.group(6) != null) { lastName += " " + Constants.YAML_NAME_MATCHER.group(6); }
+                if (Constants.YAML_NAME_MATCHER.group(7) != null) { lastName += " " + Constants.YAML_NAME_MATCHER.group(7); }
                 javaChampions.add(new JavaChampion(title.trim(), firstName.trim(), lastName.trim()));
             }
         });
