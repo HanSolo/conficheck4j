@@ -73,7 +73,7 @@ for %%s in ("msi" "exe") do call "%JAVA_HOME%\bin\jpackage" ^
   --java-options -Xmx2048m ^
   --java-options '--enable-preview' ^
   --runtime-image build\java-runtime ^
-  --icon resources\icon.ico ^
+  --icon resources\Icon.ico ^
   --win-shortcut ^
   --win-menu ^
   --win-menu-group "ConfiCheck" ^
