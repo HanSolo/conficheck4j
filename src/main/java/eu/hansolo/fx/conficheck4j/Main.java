@@ -69,6 +69,7 @@ import javafx.stage.Popup;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
+import java.io.File;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -112,6 +113,9 @@ public class Main extends Application {
 
     @Override public void init() {
         this.model = new ConfiModel();
+
+        final File folder = new File(eu.hansolo.toolbox.Constants.HOME_FOLDER + Constants.APP_NAME);
+        if (!folder.exists()) { folder.mkdir(); }
 
         // Continents
         Text continentText = Factory.createText("Continent", Color.BLACK, Fonts.avenirNextLtProRegular(Constants.STD_FONT_SIZE));
@@ -416,7 +420,7 @@ public class Main extends Application {
         StackPane speakerImagePane = new StackPane(backgroundCircle);
         speakerImagePane.getChildren().add(speakerImageView);
         if (speakerImage.isEmpty()) {
-            speakerImagePane.setBackground(new Background(new BackgroundFill(new LinearGradient(0, 0, 0, 1, true, CycleMethod.NO_CYCLE, new Stop(0, Color.GRAY), new Stop(1, Color.DARKGRAY)), new CornerRadii(48), Insets.EMPTY)));
+            speakerImagePane.setBackground(new Background(new BackgroundFill(new LinearGradient(0, 0, 0, 1, true, CycleMethod.NO_CYCLE, new Stop(0, Color.GRAY), new Stop(1, Color.DARKGRAY)), new CornerRadii(50), Insets.EMPTY)));
         }
 
         Circle circle = new Circle(12, 12, 12);
@@ -442,6 +446,7 @@ public class Main extends Application {
 
         speakerImagePane.getChildren().add(photoIconPane);
         speakerImagePane.setPrefSize(100, 100);
+        speakerImagePane.setMaxSize(100, 100);
 
         Region copyImageIcon = new Region();
         copyImageIcon.getStyleClass().add("copy-icon");
