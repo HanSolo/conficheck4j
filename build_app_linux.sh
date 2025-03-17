@@ -77,7 +77,7 @@ do
   --type $type \
   --dest build/installer \
   --input build/installer/input/libs \
-  --name ConfiCheck \
+  --name ConfiCheck4J \
   --main-class eu.hansolo.fx.conficheck4j.Launcher \
   --main-jar ${MAIN_JAR} \
   --java-options -Xmx2048m \
@@ -87,7 +87,7 @@ do
   --runtime-image build/java-runtime \
   --icon resources/Icon128.png \
   --linux-shortcut \
-  --linux-menu-group "ConfiCheck" \
+  --linux-menu-group "ConfiCheck4J" \
   --app-version ${APP_VERSION} \
   --vendor "Gerrit Grunwald" \
   --copyright "Copyright © 2025 Gerrit Grunwald" \
