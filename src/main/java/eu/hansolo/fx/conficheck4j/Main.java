@@ -479,7 +479,7 @@ public class Main extends Application {
         Label     speakerNameLabel     = Factory.createLabel("Name", Constants.GRAY, Fonts.avenirNextLtProDemi(Constants.STD_FONT_SIZE), Pos.CENTER_LEFT);
         HBox      speakerNameHBox      = new HBox(speakerNameLabel, Factory.createSpacer(Orientation.HORIZONTAL), copyNameIcon);
 
-        Label     speakerTitleLabel     = Factory.createLabel("First", Constants.GRAY, Fonts.avenirNextLtProDemi(Constants.STD_FONT_SIZE), Pos.CENTER_LEFT);
+        Label     speakerTitleLabel     = Factory.createLabel("Title", Constants.GRAY, Fonts.avenirNextLtProDemi(Constants.STD_FONT_SIZE), Pos.CENTER_LEFT);
         TextField speakerTitleTextField = Factory.createTextField("Your title, if any (e.g. Dr., Phd.)", "Speaker title", Constants.STD_FONT_SIZE);
         speakerTitleTextField.setFocusTraversable(true);
         HBox      speakerTitleHBox      = new HBox(5, speakerTitleLabel, speakerTitleTextField);
@@ -752,9 +752,6 @@ public class Main extends Application {
     }
 
     public static void main(String[] args) {
-        List<JavaChampion> javaChampions = Helper.getJavaChampions();
-        javaChampions.forEach(System.out::println);
-
         launch(args);
     }
 }
