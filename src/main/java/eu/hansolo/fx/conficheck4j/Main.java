@@ -411,7 +411,7 @@ public class Main extends Application {
         speakerImageView.setFitWidth(100);
         speakerImageView.setClip(new Circle(50, 50, 50));
 
-        Circle backgroundCircle = new Circle(50, 50, 50);
+        Circle backgroundCircle = new Circle(50, 50, 48);
         backgroundCircle.setFill(Color.TRANSPARENT);
         backgroundCircle.setStroke(Color.BLACK);
         backgroundCircle.setStrokeWidth(5);
@@ -420,7 +420,7 @@ public class Main extends Application {
         StackPane speakerImagePane = new StackPane(backgroundCircle);
         speakerImagePane.getChildren().add(speakerImageView);
         if (speakerImage.isEmpty()) {
-            speakerImagePane.setBackground(new Background(new BackgroundFill(new LinearGradient(0, 0, 0, 1, true, CycleMethod.NO_CYCLE, new Stop(0, Color.GRAY), new Stop(1, Color.DARKGRAY)), new CornerRadii(50), Insets.EMPTY)));
+            speakerImagePane.setBackground(new Background(new BackgroundFill(new LinearGradient(0, 0, 0, 1, true, CycleMethod.NO_CYCLE, new Stop(0, Color.GRAY), new Stop(1, Color.DARKGRAY)), new CornerRadii(75), Insets.EMPTY)));
         }
 
         Circle circle = new Circle(12, 12, 12);
