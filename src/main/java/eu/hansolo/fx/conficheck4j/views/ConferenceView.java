@@ -13,6 +13,7 @@ import eu.hansolo.fx.conficheck4j.tools.Factory;
 import eu.hansolo.fx.conficheck4j.tools.Helper;
 import eu.hansolo.fx.conficheck4j.tools.IsoCountryCodes;
 import eu.hansolo.fx.conficheck4j.tools.IsoCountryInfo;
+import javafx.application.Platform;
 import javafx.beans.DefaultProperty;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
@@ -344,10 +345,17 @@ public class ConferenceView extends Region {
     private void updateConferenceProposals(final VBox proposedSessions) {
         List<HBox> prpsd = new ArrayList<>();
         this.conference.get().getProposals().entrySet().forEach(entry -> {
-            Text proposalText = new Text(entry.getKey().getTitle());
+            MenuItem removeProposalItem = new MenuItem("Remove proposal");
+            removeProposalItem.setOnAction(e -> {
+                Platform.runLater(() -> this.conference.get().getProposals().remove(entry.getKey()));
+            });
+            ContextMenu contextMenu = new ContextMenu();
+            contextMenu.getItems().add(removeProposalItem);
+
+            Label proposalText = Factory.createRegularLabel(entry.getKey().getTitle(), Constants.BLACK, 12, Pos.CENTER_LEFT);
             proposalText.setTextAlignment(TextAlignment.LEFT);
-            proposalText.setWrappingWidth(300);
-            proposalText.setFont(Fonts.avenirNextLtProRegular(12));
+            proposalText.setWrapText(true);
+            proposalText.setContextMenu(contextMenu);
 
             ComboBox<ProposalStatus> proposalStatusComboBox = new ComboBox<>();
             proposalStatusComboBox.getItems().addAll(ProposalStatus.values());
