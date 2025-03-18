@@ -323,10 +323,29 @@
     -fx-background-color: transparent;
 }
 
-
 .filter-combobox {
     -fx-background-color : -fx-outer-border, -fx-inner-border, -fx-body-color;
     -fx-background-color : transparent, transparent, transparent;
     -fx-background-insets: 0, 1, 2;
     -fx-background-radius: 5, 4, 3;
+}
+
+.menu-button {
+    -fx-background-color : transparent;
+    -fx-background-insets: 0;
+    -fx-padding          : 0;
+}
+.menu-button > .arrow-button {
+    -fx-max-width        : 0;
+    -fx-min-width        : 0;
+    -fx-pref-width       : 0;
+    -fx-background-color : transparent;
+    -fx-background-insets: 0;
+    -fx-padding          : 0;
+}
+.menu-button > .arrow-button > .arrow {
+    -fx-background-color : transparent;
+    -fx-background-insets: 0;
+    -fx-padding          : 0;
+    -fx-shape            : "";
 }

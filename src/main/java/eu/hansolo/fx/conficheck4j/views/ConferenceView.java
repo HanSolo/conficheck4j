@@ -31,6 +31,7 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
+import javafx.scene.control.MenuButton;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.Separator;
 import javafx.scene.control.Tooltip;
@@ -284,10 +285,9 @@ public class ConferenceView extends Region {
         plusIcon.setMaxSize(16, 16);
         Tooltip.install(plusIcon, new Tooltip("Add proposal to conference"));
 
-        Label addProposalLabel = new Label("", plusIcon);
-        addProposalLabel.setGraphicTextGap(0);
-        ContextMenu contextMenu = new ContextMenu();
-        contextMenu.setOnAction(e -> {
+        MenuButton addProposalButton = new MenuButton("", plusIcon);
+        addProposalButton.setGraphicTextGap(0);
+        addProposalButton.setOnAction(e -> {
             final String selectedProposal = ((MenuItem) e.getTarget()).getText();
             this.proposals.stream()
                           .filter(proposal -> proposal.getTitle().equals(selectedProposal))
@@ -296,11 +296,10 @@ public class ConferenceView extends Region {
         });
         this.proposals.forEach(proposal -> {
             MenuItem menuItem = new MenuItem(proposal.getTitle());
-            contextMenu.getItems().add(menuItem);
+            addProposalButton.getItems().add(menuItem);
         });
-        addProposalLabel.setContextMenu(contextMenu);
 
-        HBox proposalsBox = new HBox(proposalsText, Factory.createSpacer(Orientation.HORIZONTAL), addProposalLabel);
+        HBox proposalsBox = new HBox(proposalsText, Factory.createSpacer(Orientation.HORIZONTAL), addProposalButton);
         proposalsBox.setAlignment(Pos.CENTER);
 
         VBox proposedSessions = new VBox(5);
