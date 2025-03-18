@@ -287,15 +287,15 @@ public class ConferenceView extends Region {
 
         MenuButton addProposalButton = new MenuButton("", plusIcon);
         addProposalButton.setGraphicTextGap(0);
-        addProposalButton.setOnAction(e -> {
-            final String selectedProposal = ((MenuItem) e.getTarget()).getText();
-            this.proposals.stream()
-                          .filter(proposal -> proposal.getTitle().equals(selectedProposal))
-                          .findFirst()
-                          .ifPresent(proposal -> this.conference.get().getProposals().put(proposal, ProposalStatus.NOT_SUBMITTED));
-        });
         this.proposals.forEach(proposal -> {
             MenuItem menuItem = new MenuItem(proposal.getTitle());
+            menuItem.setOnAction(e -> {
+                final String selectedProposal = menuItem.getText();
+                this.proposals.stream()
+                              .filter(p -> p.getTitle().equals(selectedProposal))
+                              .findFirst()
+                              .ifPresent(p -> this.conference.get().getProposals().put(p, ProposalStatus.NOT_SUBMITTED));
+            });
             addProposalButton.getItems().add(menuItem);
         });
 
