@@ -671,7 +671,11 @@ public class Main extends Application {
 
         VBox  proposalsVBox = new VBox();
         this.model.allProposals.forEach(proposal -> {
-            ProposalView proposalView = new ProposalView(Main.this, copiedFeedbackPane, proposal, this.model.allProposals, clipboard, clipboardContent);
+            ProposalView proposalView = new ProposalView(Main.this, copiedFeedbackPane, proposal, clipboard, clipboardContent);
+            proposalView.getTrashIcon().setOnMousePressed(evt -> {
+                this.model.allProposals.remove(proposalView);
+                proposalsVBox.getChildren().remove(proposalView);
+            });
             proposalsVBox.getChildren().add(proposalView);
         });
         ScrollPane scrollPane = new ScrollPane(proposalsVBox);
@@ -682,8 +686,13 @@ public class Main extends Application {
             this.model.allProposals.add(new ProposalItem("", "", ""));
             proposalsVBox.getChildren().clear();
             this.model.allProposals.forEach(proposal -> {
-                ProposalView proposalView = new ProposalView(Main.this, copiedFeedbackPane, proposal, this.model.allProposals, clipboard, clipboardContent);
+                ProposalView proposalView = new ProposalView(Main.this, copiedFeedbackPane, proposal, clipboard, clipboardContent);
+                proposalView.getTrashIcon().setOnMousePressed(evt -> {
+                    this.model.allProposals.remove(proposalView);
+                    proposalsVBox.getChildren().remove(proposalView);
+                });
                 proposalsVBox.getChildren().add(proposalView);
+                Platform.runLater(() -> scrollPane.setVvalue(1.0));
             });
         });
 

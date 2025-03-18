@@ -6,6 +6,7 @@ import eu.hansolo.fx.conficheck4j.fonts.Fonts;
 import eu.hansolo.fx.conficheck4j.tools.Constants;
 import eu.hansolo.fx.conficheck4j.tools.Factory;
 import eu.hansolo.fx.conficheck4j.tools.Helper;
+import javafx.application.Platform;
 import javafx.beans.DefaultProperty;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -41,9 +42,9 @@ public class ProposalView extends Region {
     public static final double                       MAXIMUM_WIDTH    = 1024;
     public static final double                       MAXIMUM_HEIGHT   = 400;
     private             Main                         main;
+    private             Region                       trashIcon;
     private             StackPane                    copiedFeedbackPane;
     private             ProposalItem                 proposal;
-    private             ObservableList<ProposalItem> proposals;
     private             double                       width;
     private             double                       height;
     private             VBox                         vBox;
@@ -53,11 +54,10 @@ public class ProposalView extends Region {
 
 
     // ******************** Constructors **************************************
-    public ProposalView(final Main main, final StackPane copiedFeedbackPane, final ProposalItem proposal, final ObservableList<ProposalItem> proposals, final Clipboard clipboard, final ClipboardContent clipboardContent) {
+    public ProposalView(final Main main, final StackPane copiedFeedbackPane, final ProposalItem proposal, final Clipboard clipboard, final ClipboardContent clipboardContent) {
         this.main               = main;
         this.copiedFeedbackPane = copiedFeedbackPane;
         this.proposal           = null == proposal ? new ProposalItem("", "", "") : proposal;
-        this.proposals          = proposals;
         this.clipboard          = clipboard;
         this.clipboardContent   = clipboardContent;
 
@@ -172,13 +172,12 @@ public class ProposalView extends Region {
         //VBox.setMargin(proposalHeaderBox, new Insets(0, 0, -10, 0));
 
         // Delete proposal
-        Region trashIcon = new Region();
+        this.trashIcon = new Region();
         trashIcon.getStyleClass().add("trash-icon");
         trashIcon.setFocusTraversable(false);
         trashIcon.setPrefSize(20, 20);
         trashIcon.setMinSize(20, 20);
         trashIcon.setMaxSize(20, 20);
-        trashIcon.setOnMousePressed(e -> this.proposals.remove(this.proposal));
         Tooltip.install(trashIcon, new Tooltip("Remove proposal"));
 
         HBox headerBox = new HBox(5, proposalHeaderBox, trashIcon);
@@ -206,6 +205,8 @@ public class ProposalView extends Region {
     @Override protected double computeMaxHeight(final double width)  { return MAXIMUM_HEIGHT; }
 
     @Override public ObservableList<Node> getChildren() { return super.getChildren(); }
+
+    public Region getTrashIcon() { return trashIcon; }
 
 
     // ******************** Layout *******************************************
