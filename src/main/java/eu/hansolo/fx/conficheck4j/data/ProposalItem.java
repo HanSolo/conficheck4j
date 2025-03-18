@@ -7,6 +7,7 @@ import eu.hansolo.toolbox.Constants;
 
 import java.util.Objects;
 import java.util.UUID;
+import java.util.regex.Matcher;
 
 
 public class ProposalItem {
@@ -46,9 +47,9 @@ public class ProposalItem {
     public final String toJsonString() {
         return new StringBuilder().append(Constants.CURLY_BRACKET_OPEN)
                                   .append(Constants.QUOTES).append(FIELD_ID).append(Constants.QUOTES_COLON_QUOTES).append(this.id).append(Constants.QUOTES).append(Constants.COMMA)
-                                  .append(Constants.QUOTES).append(FIELD_TITLE).append(Constants.QUOTES_COLON_QUOTES).append(this.title.replaceAll("\\n", " ")).append(Constants.QUOTES).append(Constants.COMMA)
-                                  .append(Constants.QUOTES).append(FIELD_ABSTRACT).append(Constants.QUOTES_COLON_QUOTES).append(this.abstrakt.replaceAll("\\n", " ")).append(Constants.QUOTES).append(Constants.COMMA)
-                                  .append(Constants.QUOTES).append(FIELD_PITCH).append(Constants.QUOTES_COLON_QUOTES).append(this.pitch.replaceAll("\\n", " ")).append(Constants.QUOTES)
+                                  .append(Constants.QUOTES).append(FIELD_TITLE).append(Constants.QUOTES_COLON_QUOTES).append(this.title.replaceAll("\\n", " ").replaceAll("\"", Matcher.quoteReplacement("\\\""))).append(Constants.QUOTES).append(Constants.COMMA)
+                                  .append(Constants.QUOTES).append(FIELD_ABSTRACT).append(Constants.QUOTES_COLON_QUOTES).append(this.abstrakt.replaceAll("\\n", " ").replaceAll("\"", Matcher.quoteReplacement("\\\""))).append(Constants.QUOTES).append(Constants.COMMA)
+                                  .append(Constants.QUOTES).append(FIELD_PITCH).append(Constants.QUOTES_COLON_QUOTES).append(this.pitch.replaceAll("\\n", " ").replaceAll("\"", Matcher.quoteReplacement("\\\""))).append(Constants.QUOTES)
                                   .append(Constants.CURLY_BRACKET_CLOSE)
                                   .toString();
     }
