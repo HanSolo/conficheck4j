@@ -102,8 +102,6 @@ public class Main extends Application {
     private              VBox                      vBox;
     private              StackPane                 pane;
     private              Stage                     stage;
-    private              ObjectProperty<Continent> selectedContinent;
-    private              ObjectProperty<Filter>    selectedFilter;
     private              BooleanProperty           speakerInfoVisible;
     private              BooleanProperty           proposalsVisible;
     private              Clipboard                 clipboard;
@@ -220,16 +218,6 @@ public class Main extends Application {
         pane.setPadding(new Insets(10, 10, 10, 10));
         pane.setMinSize(600, 720);
 
-        this.selectedContinent  = new ObjectPropertyBase<>(Continent.ALL) {
-            @Override protected void invalidated() { updateView(); }
-            @Override public Object getBean() { return Main.this; }
-            @Override public String getName() { return "selectedContinent"; }
-        };
-        this.selectedFilter     = new ObjectPropertyBase<>(Filter.ALL) {
-            @Override protected void invalidated() { updateView(); }
-            @Override public Object getBean() { return Main.this; }
-            @Override public String getName() { return "selectedFilter"; }
-        };
         this.speakerInfoVisible = new BooleanPropertyBase(Boolean.FALSE) {
             @Override protected void invalidated() { if (get()) { openSpeakerInfo(); } }
             @Override public Object getBean() { return Main.this; }
@@ -248,12 +236,13 @@ public class Main extends Application {
 
     private void registerListeners() {
         this.model.update.addListener(o -> updateView());
-        this.continentsComboBox.getSelectionModel().selectedItemProperty().addListener((o, ov, nv) -> this.selectedContinent.set(Constants.Continent.fromText(nv)));
-        this.allToggleButton.selectedProperty().addListener((o, ov, nv) -> this.selectedFilter.set(Filter.ALL));
-        this.speakingToggleButton.selectedProperty().addListener((o, ov, nv) -> this.selectedFilter.set(Filter.SPEAKING));
-        this.attendingToggleButton.selectedProperty().addListener((o, ov, nv) -> this.selectedFilter.set(Filter.ATTENDING));
-        this.cfpOpenToggleButton.selectedProperty().addListener((o, ov, nv) -> this.selectedFilter.set(Filter.CFP_OPEN));
-
+        this.continentsComboBox.getSelectionModel().selectedItemProperty().addListener((o, ov, nv) -> this.model.selectedContinent.set(Constants.Continent.fromText(nv)));
+        this.allToggleButton.selectedProperty().addListener((o, ov, nv) -> this.model.selectedFilter.set(Filter.ALL));
+        this.speakingToggleButton.selectedProperty().addListener((o, ov, nv) -> this.model.selectedFilter.set(Filter.SPEAKING));
+        this.attendingToggleButton.selectedProperty().addListener((o, ov, nv) -> this.model.selectedFilter.set(Filter.ATTENDING));
+        this.cfpOpenToggleButton.selectedProperty().addListener((o, ov, nv) -> this.model.selectedFilter.set(Filter.CFP_OPEN));
+        this.model.selectedFilter.addListener(o -> updateView());
+        this.model.selectedContinent.addListener(o -> updateView());
     }
 
     private void initOnFXApplicationThread() {
@@ -292,7 +281,7 @@ public class Main extends Application {
 
     private void updateView() {
         Platform.runLater(() -> {
-            List<String>         countriesInContinent   = Continent.ALL == this.selectedContinent.get() ? IsoCountries.ALL_COUNTRIES.stream().map(isoCountryInfo -> isoCountryInfo.name()).toList() : IsoCountries.ALL_COUNTRIES.stream().filter(country -> country.continent().equals(selectedContinent.get().code)).map(isoCountryInfo -> isoCountryInfo.name()).toList();
+            List<String>         countriesInContinent   = Continent.ALL == this.model.selectedContinent.get() ? IsoCountries.ALL_COUNTRIES.stream().map(isoCountryInfo -> isoCountryInfo.name()).toList() : IsoCountries.ALL_COUNTRIES.stream().filter(country -> country.continent().equals(this.model.selectedContinent.get().code)).map(isoCountryInfo -> isoCountryInfo.name()).toList();
             List<ConferenceItem> conferencesInContinent = this.model.conferences.stream().filter(conference -> countriesInContinent.contains(conference.getCountry())).toList();
             this.model.conferencesPerMonth.clear();
             this.model.conferencesPerContinent.clear();
@@ -306,7 +295,7 @@ public class Main extends Application {
                 this.model.conferencesPerMonth.get(month).add(conference);
                 this.model.conferencesPerContinent.get(month).add(conference);
             });
-            switch (this.selectedFilter.get()) {
+            switch (this.model.selectedFilter.get()) {
                 case ALL       -> {
                     this.model.filteredConferences.clear();
                     this.model.filteredConferences.putAll(this.model.conferencesPerContinent);
@@ -356,9 +345,9 @@ public class Main extends Application {
                 TitledPane monthPane = new TitledPane(Constants.MONTHS[month - 1] + " (" + conferencesInMonth.size() + ")", monthBox);
                 monthPane.setAnimated(false);
                 monthPane.setCollapsible(true);
-                switch (this.selectedFilter.get()) {
-                    case ALL                            -> monthPane.setExpanded(month == currentMonth);
-                    case SPEAKING, ATTENDING, CFP_OPEN  -> monthPane.setExpanded(!this.model.filteredConferences.get(month).isEmpty());
+                switch (this.model.selectedFilter.get()) {
+                    case ALL                           -> monthPane.setExpanded(month == currentMonth);
+                    case SPEAKING, ATTENDING, CFP_OPEN -> monthPane.setExpanded(!this.model.filteredConferences.get(month).isEmpty());
                 }
                 filtered.add(monthPane);
             });

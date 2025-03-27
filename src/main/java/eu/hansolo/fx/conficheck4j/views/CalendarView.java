@@ -27,6 +27,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoField;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 @DefaultProperty("children")
@@ -88,6 +89,7 @@ public class CalendarView extends Region {
                 scrollPane.setHvalue(0.25);
             }
         });
+        this.model.update.addListener(o -> redraw());
     }
 
 
@@ -174,37 +176,42 @@ public class CalendarView extends Region {
                 ctx.fillText(formatter.format(date), x, topY * 0.5);
             }
 
-            final int  month      = date.getMonth().getValue();
-            final long startOfDay = date.toLocalDate().atStartOfDay().toEpochSecond(ZoneId.systemDefault().getRules().getOffset(date.toLocalDateTime()));
-            int  confCount  = 0;
+            final int     month      = date.getMonth().getValue();
+            final long    startOfDay = date.toLocalDate().atStartOfDay().toEpochSecond(ZoneId.systemDefault().getRules().getOffset(date.toLocalDateTime()));
+            AtomicInteger confCount  = new AtomicInteger(0);
             if (this.model.conferencesPerMonth.isEmpty()) { return; }
 
-            for (final ConferenceItem conference : this.model.conferencesPerMonth.get(month)) {
-                ZonedDateTime d = ZonedDateTime.ofInstant(conference.getDate(), ZoneId.systemDefault());
-                final long   startDate = d.toLocalDate().atStartOfDay().toEpochSecond(ZoneOffset.systemDefault().getRules().getOffset(d.toLocalDateTime()));
-                final double length    = tickStepX * conference.getDays();
-                //System.out.println(startDate + " >= " + startDate + " && " + (startOfDay + Constants.SECONDS_PER_DAY) + " <= " + (startOfDay + Constants.SECONDS_PER_DAY));
-                if (startDate >= startOfDay && startDate + Constants.SECONDS_PER_DAY <= startOfDay + Constants.SECONDS_PER_DAY) {
-                    Color fillColor;
-                    switch (conference.getAttendence()) {
-                        case  ATTENDING -> fillColor = Constants.ORANGE;
-                        case  SPEAKING  -> fillColor = Constants.GREEN;
-                        default         -> fillColor = Constants.PURPLE;
-                    }
-                    final double y = topY + confCount * scaleY;
-                    ctx.setFill(fillColor);
-                    ctx.beginPath();
-                    ctx.rect(x, y + rectOffsetY, length, rectHeight);
-                    ctx.closePath();
-                    ctx.fill();
+            //for (final ConferenceItem conference : this.model.conferencesPerMonth.get(month)) {
+            this.model.filteredConferences.entrySet().forEach(entry -> {
+               if (entry.getKey() == month) {
+                   for (final ConferenceItem conference : entry.getValue()) {
+                       ZonedDateTime d = ZonedDateTime.ofInstant(conference.getDate(), ZoneId.systemDefault());
+                       final long   startDate = d.toLocalDate().atStartOfDay().toEpochSecond(ZoneOffset.systemDefault().getRules().getOffset(d.toLocalDateTime()));
+                       final double length    = tickStepX * conference.getDays();
+                       //System.out.println(startDate + " >= " + startDate + " && " + (startOfDay + Constants.SECONDS_PER_DAY) + " <= " + (startOfDay + Constants.SECONDS_PER_DAY));
+                       if (startDate >= startOfDay && startDate + Constants.SECONDS_PER_DAY <= startOfDay + Constants.SECONDS_PER_DAY) {
+                           Color fillColor;
+                           switch (conference.getAttendence()) {
+                               case  ATTENDING -> fillColor = Constants.ORANGE;
+                               case  SPEAKING  -> fillColor = Constants.GREEN;
+                               default         -> fillColor = Constants.PURPLE;
+                           }
+                           final double y = topY + confCount.get() * scaleY;
+                           ctx.setFill(fillColor);
+                           ctx.beginPath();
+                           ctx.rect(x, y + rectOffsetY, length, rectHeight);
+                           ctx.closePath();
+                           ctx.fill();
 
-                    ctx.setTextAlign(TextAlignment.LEFT);
-                    ctx.setFont(valueFont);
-                    ctx.setFill(fgdColor);
-                    ctx.fillText(conference.getName(), x + length + 0.5, y + scaleY * 0.5);
-                }
-                confCount += 1.0;
-            }
+                           ctx.setTextAlign(TextAlignment.LEFT);
+                           ctx.setFont(valueFont);
+                           ctx.setFill(fgdColor);
+                           ctx.fillText(conference.getName(), x + length + 0.5, y + scaleY * 0.5);
+                       }
+                       confCount.incrementAndGet();
+                   }
+               }
+            });
         }
     }
 }
