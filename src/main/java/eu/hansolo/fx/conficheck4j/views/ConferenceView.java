@@ -56,6 +56,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -137,6 +138,10 @@ public class ConferenceView extends Region {
         // Conference Name
         Text conferenceName = new Text(conference.get().getName());
         conferenceName.setFont(Fonts.avenirNextLtProMedium(16));
+        if (isOver()) {
+            conferenceName.setFill(Color.GRAY);
+            conferenceName.setStrikethrough(true);
+        }
 
         // Country Flag
         Image flag;
@@ -404,6 +409,8 @@ public class ConferenceView extends Region {
         });
         proposedSessions.getChildren().setAll(prpsd);
     }
+
+    private boolean isOver() { return Instant.ofEpochSecond(this.conference.get().getDate().getEpochSecond() + (long) (this.conference.get().getDays()) * Constants.SECONDS_PER_DAY).isBefore(Instant.now()); }
 
 
     // ******************** Layout *******************************************
