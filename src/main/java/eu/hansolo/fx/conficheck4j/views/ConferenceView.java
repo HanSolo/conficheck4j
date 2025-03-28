@@ -332,6 +332,18 @@ public class ConferenceView extends Region {
     @Override protected double computeMaxWidth(final double height)  { return MAXIMUM_WIDTH; }
     @Override protected double computeMaxHeight(final double width)  { return MAXIMUM_HEIGHT; }
 
+    public ConferenceItem getConference() { return conference.get(); }
+
+    public void hide() {
+        this.setVisible(false);
+        this.setManaged(false);
+    }
+
+    public void show() {
+        this.setManaged(true);
+        this.setVisible(true);
+    }
+
     private void openUrlInExternalBrowser(final String url) {
         if (this.model.networkMonitor.isOnline()) {
             try {

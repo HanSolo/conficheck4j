@@ -12,8 +12,6 @@ import eu.hansolo.fx.conficheck4j.tools.Constants.Filter;
 import eu.hansolo.fx.conficheck4j.tools.Constants.ProposalStatus;
 import eu.hansolo.fx.conficheck4j.tools.Factory;
 import eu.hansolo.fx.conficheck4j.tools.Helper;
-import eu.hansolo.fx.conficheck4j.tools.IsoCountries;
-import eu.hansolo.fx.conficheck4j.tools.JavaChampion;
 import eu.hansolo.fx.conficheck4j.tools.NetworkMonitor;
 import eu.hansolo.fx.conficheck4j.tools.PersistentToggleGroup;
 import eu.hansolo.fx.conficheck4j.tools.PropertyManager;
@@ -29,8 +27,6 @@ import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.BooleanPropertyBase;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.ObjectPropertyBase;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
@@ -75,11 +71,9 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
-import java.time.temporal.ChronoField;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static eu.hansolo.toolbox.Constants.COMMA;
 import static eu.hansolo.toolbox.Constants.NEW_LINE;
@@ -135,7 +129,10 @@ public class Main extends Application {
 
         Button reloadButton = new Button("", reloadIcon);
         reloadButton.setTooltip(new Tooltip("Reload conferences"));
-        reloadButton.setOnAction(e -> this.model.loadConferenceItems(this.model));
+        reloadButton.setOnAction(e -> {
+            this.conferencesVBox.getChildren().clear();
+            this.model.loadConferenceItems(this.model);
+        });
         reloadButton.disableProperty().bind(this.model.networkMonitor.offlineProperty());
 
         HBox topHBox = new HBox(5, continentText, continentsComboBox, Factory.createSpacer(Orientation.HORIZONTAL), reloadButton);
@@ -241,7 +238,7 @@ public class Main extends Application {
         this.speakingToggleButton.selectedProperty().addListener((o, ov, nv) -> this.model.selectedFilter.set(Filter.SPEAKING));
         this.attendingToggleButton.selectedProperty().addListener((o, ov, nv) -> this.model.selectedFilter.set(Filter.ATTENDING));
         this.cfpOpenToggleButton.selectedProperty().addListener((o, ov, nv) -> this.model.selectedFilter.set(Filter.CFP_OPEN));
-        this.model.selectedFilter.addListener(o -> updateView());
+        //this.model.selectedFilter.addListener(o -> updateView());
         this.model.selectedContinent.addListener(o -> updateView());
     }
 
@@ -280,64 +277,9 @@ public class Main extends Application {
     }
 
     private void updateView() {
-        Platform.runLater(() -> {
-            List<String>         countriesInContinent   = Continent.ALL == this.model.selectedContinent.get() ? IsoCountries.ALL_COUNTRIES.stream().map(isoCountryInfo -> isoCountryInfo.name()).toList() : IsoCountries.ALL_COUNTRIES.stream().filter(country -> country.continent().equals(this.model.selectedContinent.get().code)).map(isoCountryInfo -> isoCountryInfo.name()).toList();
-            List<ConferenceItem> conferencesInContinent = this.model.conferences.stream().filter(conference -> countriesInContinent.contains(conference.getCountry())).toList();
-            this.model.conferencesPerMonth.clear();
-            this.model.conferencesPerContinent.clear();
-            conferencesInContinent.forEach(conference -> {
-                final ZonedDateTime date  = ZonedDateTime.ofInstant(conference.getDate(), ZoneId.systemDefault());
-                final Integer       month = date.get(ChronoField.MONTH_OF_YEAR);
-                if (!this.model.conferencesPerMonth.containsKey(month)) {
-                    this.model.conferencesPerMonth.put(month, new ArrayList<>());
-                    this.model.conferencesPerContinent.put(month, new ArrayList<>());
-                }
-                this.model.conferencesPerMonth.get(month).add(conference);
-                this.model.conferencesPerContinent.get(month).add(conference);
-            });
-            switch (this.model.selectedFilter.get()) {
-                case ALL       -> {
-                    this.model.filteredConferences.clear();
-                    this.model.filteredConferences.putAll(this.model.conferencesPerContinent);
-                }
-                case SPEAKING  -> {
-                    this.model.filteredConferences.clear();
-                    conferencesInContinent.stream()
-                                          .filter(conference -> conference.getAttendence() == AttendingStatus.SPEAKING)
-                                          .forEach(conference -> {
-                        final ZonedDateTime date  = ZonedDateTime.ofInstant(conference.getDate(), ZoneId.systemDefault());
-                        final Integer       month = date.get(ChronoField.MONTH_OF_YEAR);
-                        if (!this.model.filteredConferences.containsKey(month)) { this.model.filteredConferences.put(month, new ArrayList<>()); }
-                        this.model.filteredConferences.get(month).add(conference);
-                    });
-                }
-                case ATTENDING -> {
-                    this.model.filteredConferences.clear();
-                    conferencesInContinent.stream()
-                                          .filter(conference -> conference.getAttendence() == AttendingStatus.ATTENDING)
-                                          .forEach(conference -> {
-                        final ZonedDateTime date  = ZonedDateTime.ofInstant(conference.getDate(), ZoneId.systemDefault());
-                        final Integer       month = date.get(ChronoField.MONTH_OF_YEAR);
-                        if (!this.model.filteredConferences.containsKey(month)) { this.model.filteredConferences.put(month, new ArrayList<>()); }
-                        this.model.filteredConferences.get(month).add(conference);
-                    });
-                }
-                case CFP_OPEN  -> {
-                    for (Integer month : this.model.conferencesPerContinent.keySet()) {
-                        if (this.model.conferencesPerContinent.get(month).isEmpty()) { continue; }
-                        this.model.filteredConferences.put(month, new ArrayList<>(this.model.conferencesPerContinent.get(month)
-                                                                                                                  .stream()
-                                                                                                                  .filter(conference -> conference.getCfpDate().isPresent())
-                                                                                                                  .filter(conference -> Helper.getDatesFromJavaConferenceDate(conference.getCfpDate().get()).length > 0 && Helper.getDatesFromJavaConferenceDate(conference.getCfpDate().get())[0].isPresent())
-                                                                                                                  .filter(conference -> Helper.isCfpOpen(ZonedDateTime.ofInstant(Helper.getDatesFromJavaConferenceDate(conference.getCfpDate().get())[0].get(), ZoneId.systemDefault()).toLocalDate()))
-                                                                                                                  .collect(Collectors.toSet())));
-                    }
-                }
-            }
-
-            final int currentMonth = LocalDate.now().getMonthValue();
-            List<TitledPane> filtered  = new ArrayList<>();
-            this.model.filteredConferences.entrySet().forEach(entry -> {
+        if (conferencesVBox.getChildren().isEmpty()) {
+            List<TitledPane> allConferences  = new ArrayList<>();
+            this.model.conferencesPerMonth.entrySet().forEach(entry -> {
                 final Integer              month              = entry.getKey();
                 final List<ConferenceItem> conferencesInMonth = entry.getValue();
                 VBox monthBox = new VBox();
@@ -345,14 +287,49 @@ public class Main extends Application {
                 TitledPane monthPane = new TitledPane(Constants.MONTHS[month - 1] + " (" + conferencesInMonth.size() + ")", monthBox);
                 monthPane.setAnimated(false);
                 monthPane.setCollapsible(true);
-                switch (this.model.selectedFilter.get()) {
-                    case ALL                           -> monthPane.setExpanded(month == currentMonth);
-                    case SPEAKING, ATTENDING, CFP_OPEN -> monthPane.setExpanded(!this.model.filteredConferences.get(month).isEmpty());
-                }
-                filtered.add(monthPane);
+                allConferences.add(monthPane);
             });
-            conferencesVBox.getChildren().setAll(filtered);
+            conferencesVBox.getChildren().setAll(allConferences);
+        }
+
+        List<TitledPane> monthPanes = conferencesVBox.getChildren().stream().map(node -> (TitledPane) node).toList();
+        monthPanes.forEach(monthPane -> monthPane.setExpanded(false));
+        List<VBox> monthVBoxes = monthPanes.stream().map(monthPane -> (VBox) monthPane.getContent()).toList();
+        for (VBox monthBox : monthVBoxes) {
+            monthBox.getChildren().stream().map(child -> (ConferenceView) child).forEach(conferenceView -> conferenceView.hide());
+        }
+
+        this.model.filteredConferences.entrySet().forEach(entry -> {
+            final Integer              month              = entry.getKey();
+            final List<ConferenceItem> conferencesInMonth = entry.getValue();
+
+            // Show/Hide conferences dependent on filtered conferences
+            for (VBox monthBox : monthVBoxes) {
+                List<ConferenceView> conferenceViews = monthBox.getChildren().stream().map(node -> (ConferenceView) node).toList();
+                conferenceViews.stream().filter(conferenceView -> conferencesInMonth.contains(conferenceView.getConference())).forEach(conferenceView -> conferenceView.show());
+            }
+
+            // Replase title pane text
+            for (VBox monthBox : monthVBoxes) {
+                long numberOfVisibleConferences = monthBox.getChildren().stream().map(child -> (ConferenceView) child).toList().stream().filter(conferenceView -> conferenceView.isVisible()).count();
+                monthPanes.stream().filter(monthPane -> monthPane.getContent().equals(monthBox)).findFirst().ifPresent(monthPane -> {
+                   String text = monthPane.getText().replaceAll("\\([0-9]+\\)", "(" + numberOfVisibleConferences + ")");
+                   monthPane.setText(text);
+                   if (Filter.ALL != this.model.selectedFilter.get()) {
+                       monthPane.setExpanded(numberOfVisibleConferences > 0);
+                   }
+                });
+            }
         });
+
+        // Expand/Collapse panes dependent on number of children
+        if (Filter.ALL == this.model.selectedFilter.get()) {
+            final int currentMonth = LocalDate.now().getMonthValue();
+            String monthName = Constants.MONTHS[currentMonth - 1];
+            monthPanes.forEach(monthPane -> {
+                monthPane.setExpanded(monthPane.getText().startsWith(monthName));
+            });
+        }
     }
 
     private void openSpeakerInfo() {
