@@ -1,6 +1,5 @@
 package eu.hansolo.fx.conficheck4j.data;
 
-import eu.hansolo.fx.conficheck4j.Main;
 import eu.hansolo.fx.conficheck4j.tools.Constants;
 import eu.hansolo.fx.conficheck4j.tools.Constants.AttendingStatus;
 import eu.hansolo.fx.conficheck4j.tools.Constants.Continent;
@@ -9,26 +8,21 @@ import eu.hansolo.fx.conficheck4j.tools.Constants.ProposalStatus;
 import eu.hansolo.fx.conficheck4j.tools.Helper;
 import eu.hansolo.fx.conficheck4j.tools.IsoCountries;
 import eu.hansolo.fx.conficheck4j.tools.NetworkMonitor;
-import eu.hansolo.fx.conficheck4j.views.ConferenceView;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ObjectPropertyBase;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.MapChangeListener;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
-import javafx.scene.control.TitledPane;
-import javafx.scene.layout.VBox;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.time.Instant;
-import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoField;
@@ -110,32 +104,23 @@ public class ConfiModel {
                                                                          .filter(conference -> conference.getUrl().equals(javaConference.link()))
                                                                          .findFirst();
                 if (optConference.isPresent()) {
-                    final Optional<Instant>[] dates   = Helper.getDatesFromJavaConferenceDate(javaConference.date());
-                    final Instant             date    = dates[0].isPresent() ? dates[0].get() : Instant.MIN;
-                    final Instant             endDate = dates[1].isPresent() ? dates[1].get() : date;
-                    final double              days    = Helper.getDaysBetweenDates(date, endDate);
+                    final Optional<Instant>[] dates    = Helper.getDatesFromJavaConferenceDate(javaConference.date());
+                    final Instant             date     = dates[0].isPresent() ? dates[0].get() : Instant.MIN;
+                    final Instant             endDate  = dates[1].isPresent() ? dates[1].get() : date;
+                    final double              days     = Helper.getDaysBetweenDates(date, endDate);
                     optConference.get().setUrl(javaConference.link());
                     optConference.get().setCfpUrl(Optional.of(javaConference.cfpLink()));
                     optConference.get().setCfpDate(Optional.of(javaConference.cfpEndDate()));
                     optConference.get().setDate(date);
                     optConference.get().setDays(days);
-                    if (year == date.get(ChronoField.YEAR)) {
-
-                    } if (year > date.get(ChronoField.YEAR) && date.get(ChronoField.MONTH_OF_YEAR) > 9) {
-
-                    } else if (year < date.get(ChronoField.YEAR) && date.get(ChronoField.MONTH_OF_YEAR) < 7) {
-
-                    } else {
-                        conferencesToRemove.add(optConference.get());
-                    }
-
                 } else {
-                    ConferenceItem conference = javaConference.convertToConferenceItem(ConfiModel.this);
-                    if (year == conference.getDate().get(ChronoField.YEAR)) {
+                    final ConferenceItem conference = javaConference.convertToConferenceItem(ConfiModel.this);
+                    final ZonedDateTime  dateTime   = ZonedDateTime.ofInstant(conference.getDate(), ZoneId.systemDefault());
+                    if (year == dateTime.get(ChronoField.YEAR)) {
                         conferencesToAdd.add(conference);
-                    } if (year > conference.getDate().get(ChronoField.YEAR) && conference.getDate().get(ChronoField.MONTH_OF_YEAR) > 9) {
+                    } if (year > dateTime.get(ChronoField.YEAR) && dateTime.get(ChronoField.MONTH_OF_YEAR) > 9) {
                         conferencesToAdd.add(conference);
-                    } else if (year < conference.getDate().get(ChronoField.YEAR) && conference.getDate().get(ChronoField.MONTH_OF_YEAR) < 7) {
+                    } else if (year < dateTime.get(ChronoField.YEAR) && dateTime.get(ChronoField.MONTH_OF_YEAR) < 7) {
                         conferencesToAdd.add(conference);
                     }
                 }
