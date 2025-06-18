@@ -28,6 +28,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoField;
@@ -99,7 +100,10 @@ public class ConfiModel {
             final String               javaConferencesJsonText = Helper.getTextFromUrl(Constants.JAVA_CONFERENCES_JSON_URL);
             this.javaConferences.setAll(Helper.parseJavaConferencesJson(javaConferencesJsonText));
 
-            List<ConferenceItem> conferencesToAdd = new ArrayList<>();
+            final ZonedDateTime now  = ZonedDateTime.now(ZoneId.systemDefault());
+            final int           year = now.get(ChronoField.YEAR);
+            List<ConferenceItem> conferencesToAdd    = new ArrayList<>();
+            List<ConferenceItem> conferencesToRemove = new ArrayList<>();
             javaConferences.forEach(javaConference -> {
                 Optional<ConferenceItem> optConference = this.conferences.stream()
                                                                          .filter(conference -> conference.getName().equals(javaConference.name()))
@@ -115,11 +119,29 @@ public class ConfiModel {
                     optConference.get().setCfpDate(Optional.of(javaConference.cfpEndDate()));
                     optConference.get().setDate(date);
                     optConference.get().setDays(days);
+                    if (year == date.get(ChronoField.YEAR)) {
+
+                    } if (year > date.get(ChronoField.YEAR) && date.get(ChronoField.MONTH_OF_YEAR) > 9) {
+
+                    } else if (year < date.get(ChronoField.YEAR) && date.get(ChronoField.MONTH_OF_YEAR) < 7) {
+
+                    } else {
+                        conferencesToRemove.add(optConference.get());
+                    }
+
                 } else {
-                    conferencesToAdd.add(javaConference.convertToConferenceItem(ConfiModel.this));
+                    ConferenceItem conference = javaConference.convertToConferenceItem(ConfiModel.this);
+                    if (year == conference.getDate().get(ChronoField.YEAR)) {
+                        conferencesToAdd.add(conference);
+                    } if (year > conference.getDate().get(ChronoField.YEAR) && conference.getDate().get(ChronoField.MONTH_OF_YEAR) > 9) {
+                        conferencesToAdd.add(conference);
+                    } else if (year < conference.getDate().get(ChronoField.YEAR) && conference.getDate().get(ChronoField.MONTH_OF_YEAR) < 7) {
+                        conferencesToAdd.add(conference);
+                    }
                 }
             });
             this.conferences.addAll(conferencesToAdd);
+            this.conferences.removeAll(conferencesToRemove);
             Helper.saveConferenceItems(this.conferences);
 
             this.update();

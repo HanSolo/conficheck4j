@@ -42,9 +42,9 @@ public final class Constants {
     public static final String   CITY_DELIMITER               = ",";
     public static final String   PROFILE_IMAGE_NAME           = "ProfileImage";
 
-    public static final int      SECONDS_PER_HOUR              = 3600;
-    public static final int      SECONDS_PER_DAY               = 86400;
-    public static final int      SECONDS_PER_WEEK              = 604800;
+    public static final int      SECONDS_PER_HOUR              =   3_600;
+    public static final int      SECONDS_PER_DAY               =  86_400;
+    public static final int      SECONDS_PER_WEEK              = 604_800;
 
     public static final long     PING_INTERVAL_IN_SEC          = 2;
     public static final String   TEST_CONNECTIVITY_URL         = "https://apple.com";
