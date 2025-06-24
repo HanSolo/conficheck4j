@@ -1,8 +1,8 @@
 #!/bin/bash
 
 JAVA_VERSION=21
-MAIN_JAR="conficheck4j-21.0.23.jar"
-APP_VERSION=21.0.23
+MAIN_JAR="conficheck4j-21.0.25.jar"
+APP_VERSION=21.0.25
 
 echo "java home: $JAVA_HOME"
 echo "project version: $PROJECT_VERSION"

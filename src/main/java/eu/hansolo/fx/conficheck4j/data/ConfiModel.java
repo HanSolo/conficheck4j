@@ -118,8 +118,6 @@ public class ConfiModel {
                     final ZonedDateTime  dateTime   = ZonedDateTime.ofInstant(conference.getDate(), ZoneId.systemDefault());
                     if (year == dateTime.get(ChronoField.YEAR)) {
                         conferencesToAdd.add(conference);
-                    } if (year > dateTime.get(ChronoField.YEAR) && dateTime.get(ChronoField.MONTH_OF_YEAR) > 9) {
-                        conferencesToAdd.add(conference);
                     } else if (year < dateTime.get(ChronoField.YEAR) && dateTime.get(ChronoField.MONTH_OF_YEAR) < 7) {
                         conferencesToAdd.add(conference);
                     }
