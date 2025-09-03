@@ -215,7 +215,7 @@ public class ConferenceItem implements Comparable<ConferenceItem> {
     @Override public boolean equals(final Object o) {
         if (o == null || getClass() != o.getClass()) { return false; }
         ConferenceItem that = (ConferenceItem) o;
-        return getId().equals(that.getId());
+        return getId().equals(that.getId()) && getDate() == that.getDate();
     }
     @Override public int hashCode() {
         return Objects.hash(name, url);

@@ -56,6 +56,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
+import java.time.temporal.ChronoField;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
@@ -136,7 +137,8 @@ public class ConferenceView extends Region {
         getStyleClass().add("conference-view");
 
         // Conference Name
-        Text conferenceName = new Text(conference.get().getName());
+
+        Text conferenceName = new Text(String.join(" ", this.conference.get().getName(), Integer.toString(ZonedDateTime.ofInstant(this.conference.get().getDate(), ZoneId.systemDefault()).get(ChronoField.YEAR))));
         conferenceName.setFont(Fonts.avenirNextLtProMedium(16));
         if (isOver()) {
             conferenceName.setFill(Color.GRAY);

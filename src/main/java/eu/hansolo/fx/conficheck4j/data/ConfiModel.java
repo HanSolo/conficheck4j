@@ -41,7 +41,7 @@ public class ConfiModel {
     public final ObservableMap<Integer, List<ConferenceItem>>   filteredConferences     = FXCollections.observableHashMap();
     public       BooleanProperty                                update                  = new SimpleBooleanProperty(false);
     public       InvalidationListener                           attendenceListener      = _ -> Helper.saveConferenceItems(this.conferences);
-    public       MapChangeListener<ProposalItem,ProposalStatus> proposalListener        = _ -> Helper.saveConferenceItems(conferences);
+    public       MapChangeListener<ProposalItem,ProposalStatus> proposalListener        = _ -> Helper.saveConferenceItems(this.conferences);
     public       ObservableList<ProposalItem>                   allProposals            = FXCollections.observableArrayList();
     public final ObjectProperty<Filter>                         selectedFilter;
     public final ObjectProperty<Continent>                      selectedContinent;
@@ -91,18 +91,21 @@ public class ConfiModel {
         } catch (IOException e) { }
 
         if (this.networkMonitor.isOnline()) {
-            final String               javaConferencesJsonText = Helper.getTextFromUrl(Constants.JAVA_CONFERENCES_JSON_URL);
+            final String javaConferencesJsonText = Helper.getTextFromUrl(Constants.JAVA_CONFERENCES_JSON_URL);
             this.javaConferences.setAll(Helper.parseJavaConferencesJson(javaConferencesJsonText));
 
             final ZonedDateTime now  = ZonedDateTime.now(ZoneId.systemDefault());
             final int           year = now.get(ChronoField.YEAR);
             List<ConferenceItem> conferencesToAdd    = new ArrayList<>();
             List<ConferenceItem> conferencesToRemove = new ArrayList<>();
+
             javaConferences.forEach(javaConference -> {
                 Optional<ConferenceItem> optConference = this.conferences.stream()
                                                                          .filter(conference -> conference.getName().equals(javaConference.name()))
                                                                          .filter(conference -> conference.getUrl().equals(javaConference.link()))
+                                                                         .filter(conference -> conference.getCfpDate().get().equals(javaConference.cfpEndDate()))
                                                                          .findFirst();
+
                 if (optConference.isPresent()) {
                     final Optional<Instant>[] dates    = Helper.getDatesFromJavaConferenceDate(javaConference.date());
                     final Instant             date     = dates[0].isPresent() ? dates[0].get() : Instant.MIN;
@@ -116,11 +119,10 @@ public class ConfiModel {
                 } else {
                     final ConferenceItem conference = javaConference.convertToConferenceItem(ConfiModel.this);
                     final ZonedDateTime  dateTime   = ZonedDateTime.ofInstant(conference.getDate(), ZoneId.systemDefault());
-                    if (year == dateTime.get(ChronoField.YEAR)) {
+                    /*if (year <= dateTime.get(ChronoField.YEAR)) {
                         conferencesToAdd.add(conference);
-                    } else if (year < dateTime.get(ChronoField.YEAR) && dateTime.get(ChronoField.MONTH_OF_YEAR) < 7) {
-                        conferencesToAdd.add(conference);
-                    }
+                    }*/
+                    conferencesToAdd.add(conference);
                 }
             });
             this.conferences.addAll(conferencesToAdd);
@@ -129,7 +131,7 @@ public class ConfiModel {
 
             this.update();
         }
-        this.update.set(!this.update.get());
+        //this.update.set(!this.update.get());
     }
 
     public final void update() {
