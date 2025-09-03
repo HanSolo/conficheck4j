@@ -131,7 +131,8 @@ public class Main extends Application {
         reloadButton.setTooltip(new Tooltip("Reload conferences"));
         reloadButton.setOnAction(e -> {
             this.conferencesVBox.getChildren().clear();
-            this.model.loadConferenceItems(this.model);
+            this.model.resetLocalConferenceData();
+            //this.model.loadConferenceItems(this.model);
         });
         reloadButton.disableProperty().bind(this.model.networkMonitor.offlineProperty());
 

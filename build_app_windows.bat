@@ -1,8 +1,8 @@
 @ECHO OFF
 
 set JAVA_VERSION=21
-set MAIN_JAR=conficheck4j-21.0.25.jar
-set APP_VERSION=21.0.25
+set MAIN_JAR=conficheck4j-21.0.27.jar
+set APP_VERSION=21.0.27
 
 rem ------ SETUP DIRECTORIES AND FILES ----------------------------------------
 rem Remove previously generated java runtime and installers. Copy all required

@@ -134,6 +134,49 @@ public class ConfiModel {
         //this.update.set(!this.update.get());
     }
 
+    public final void resetLocalConferenceData() {
+        final File conferenceJson = new File(eu.hansolo.toolbox.Constants.HOME_FOLDER + Constants.APP_NAME + File.separator + eu.hansolo.fx.conficheck4j.tools.Constants.CONFERENCE_ITEMS_FILENAME);
+        if (networkMonitor.isOnline() && null != conferenceJson && conferenceJson.exists()) {
+            conferenceJson.delete();
+
+            this.conferences.clear();
+
+            final String javaConferencesJsonText = Helper.getTextFromUrl(Constants.JAVA_CONFERENCES_JSON_URL);
+            this.javaConferences.setAll(Helper.parseJavaConferencesJson(javaConferencesJsonText));
+
+            final ZonedDateTime        now                 = ZonedDateTime.now(ZoneId.systemDefault());
+            final List<ConferenceItem> conferencesToAdd    = new ArrayList<>();
+
+            javaConferences.forEach(javaConference -> {
+                Optional<ConferenceItem> optConference = this.conferences.stream()
+                                                                         .filter(conference -> conference.getName().equals(javaConference.name()))
+                                                                         .filter(conference -> conference.getUrl().equals(javaConference.link()))
+                                                                         .filter(conference -> conference.getCfpDate().get().equals(javaConference.cfpEndDate()))
+                                                                         .findFirst();
+
+                if (optConference.isPresent()) {
+                    final Optional<Instant>[] dates    = Helper.getDatesFromJavaConferenceDate(javaConference.date());
+                    final Instant             date     = dates[0].isPresent() ? dates[0].get() : Instant.MIN;
+                    final Instant             endDate  = dates[1].isPresent() ? dates[1].get() : date;
+                    final double              days     = Helper.getDaysBetweenDates(date, endDate);
+                    optConference.get().setUrl(javaConference.link());
+                    optConference.get().setCfpUrl(Optional.of(javaConference.cfpLink()));
+                    optConference.get().setCfpDate(Optional.of(javaConference.cfpEndDate()));
+                    optConference.get().setDate(date);
+                    optConference.get().setDays(days);
+                } else {
+                    final ConferenceItem conference = javaConference.convertToConferenceItem(ConfiModel.this);
+                    final ZonedDateTime  dateTime   = ZonedDateTime.ofInstant(conference.getDate(), ZoneId.systemDefault());
+                    conferencesToAdd.add(conference);
+                }
+            });
+            this.conferences.addAll(conferencesToAdd);
+            Helper.saveConferenceItems(this.conferences);
+
+            this.update();
+        }
+    }
+
     public final void update() {
         List<String>         countriesInContinent   = Continent.ALL == this.selectedContinent.get() ? IsoCountries.ALL_COUNTRIES.stream().map(isoCountryInfo -> isoCountryInfo.name()).toList() : IsoCountries.ALL_COUNTRIES.stream().filter(country -> country.continent().equals(this.selectedContinent.get().code)).map(isoCountryInfo -> isoCountryInfo.name()).toList();
         List<ConferenceItem> conferencesInContinent = this.conferences.stream().filter(conference -> countriesInContinent.contains(conference.getCountry())).toList();
